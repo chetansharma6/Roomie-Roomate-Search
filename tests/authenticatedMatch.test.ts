@@ -22,7 +22,7 @@ const ROWS = [row('me'), row('a'), row('b'), row('far', { distance_from_campus_m
 function supabaseFetch(userId: string | null) {
   return vi.fn(async (url: string | URL) => {
     const u = String(url);
-    if (u.includes('/auth/v1/user')) return userId ? ({ ok: true, status: 200, json: async () => ({ id: userId }) } as Response) : ({ ok: false, status: 401 } as Response);
+    if (u.includes('/auth/v1/user')) return userId ? ({ ok: true, status: 200, json: async () => ({ id: userId, email_confirmed_at: '2026-11-21T00:00:00Z' }) } as Response) : ({ ok: false, status: 401 } as Response);
     const q = new URL(u).searchParams;
     const idEq = q.get('id'); const uniEq = q.get('university_id');
     const data = idEq ? ROWS.filter((r) => `eq.${r.id}` === idEq) : ROWS.filter((r) => `eq.${r.university_id}` === uniEq);

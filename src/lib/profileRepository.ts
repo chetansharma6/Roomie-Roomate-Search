@@ -4,7 +4,7 @@ import type { RoommateProfile } from '../types/profile.js';
 /**
  * The single seam between matching logic and where profiles live.
  * Demo mode uses the in-memory adapter below; Supabase uses
- * api/_lib/supabaseRepository.ts. Matching code never touches storage directly.
+ * api/_lib/supabase.ts. Matching code never touches storage directly.
  */
 export interface ProfileRepository {
   getProfile(id: string): Promise<RoommateProfile | null>;
