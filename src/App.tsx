@@ -1,9 +1,11 @@
 import { lazy, Suspense, useLayoutEffect } from 'react';
-import { Link, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { DemoDiscover } from './demo/DemoDiscover';
 import { Landing } from './pages/Landing';
 import Discover from './pages/Discover';
+import { useAuth } from './hooks/useAuth';
+import { Onboarding, StudentDiscover } from './pages/AuthenticatedRoutes';
 
 const SignIn = lazy(() => import('./pages/SignIn'));
 const hasSupabase = Boolean(
@@ -44,10 +46,22 @@ function PageNotFound() {
   );
 }
 
+function DiscoveryRoute({ embedded }: { embedded: boolean }) {
+  const { user, loading, destination, error } = useAuth();
+  if (embedded) return <DemoDiscover embedded />;
+  if (loading) return <main className="shell route-notice" role="status">Restoring session…</main>;
+  if (error) return <Navigate to="/signup" replace />;
+  if (!user) return <DemoDiscover embedded={embedded} />;
+  if (destination === '/onboarding') return <Navigate to="/onboarding" replace />;
+  return <StudentDiscover />;
+}
+
 export function App() {
+  const { user } = useAuth();
   const [params] = useSearchParams();
   const discovering = useLocation().pathname.replace(/\/+$/, '').toLowerCase() === '/discover';
   const embedded = discovering && params.get('preview') === '1' && window.self !== window.top;
+  const showSiteChrome = !discovering || (!embedded && Boolean(user));
 
   useLayoutEffect(() => {
     if (discovering) window.scrollTo(0, 0);
@@ -55,11 +69,14 @@ export function App() {
 
   return (
     <>
-      {!discovering && <Navbar />}
+      {showSiteChrome && <Navbar />}
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/discover" element={<DemoDiscover embedded={embedded} />} />
+        <Route path="/discover" element={<DiscoveryRoute embedded={embedded} />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/auth" element={<Navigate to="/signup" replace />} />
+        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/account" element={hasSupabase ? <Suspense fallback={<main role="status">Loading account…</main>}><SignIn redirectAfterSignIn={false} /></Suspense> : <SignupPlaceholder />} />
         <Route path="/matches" element={
           <main className="min-h-screen bg-slate-50 text-slate-900" id="main-content">
             <Discover />
@@ -67,7 +84,7 @@ export function App() {
         } />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
-      {!discovering && <footer className="site-footer"><div className="shell">Roomie · HackJam 2026</div></footer>}
+      {showSiteChrome && <footer className="site-footer"><div className="shell">Roomie · HackJam 2026</div></footer>}
     </>
   );
 }

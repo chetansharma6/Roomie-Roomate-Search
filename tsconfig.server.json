@@ -12,6 +12,6 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["api", "tests", "scripts", "src/types", "src/data", "src/lib"],
+  "include": ["api", "tests", "scripts", "src/types", "src/data", "src/lib", "src/vite-env.d.ts"],
   "exclude": ["src/lib/supabase.ts"]
 }

@@ -34,6 +34,7 @@ export default function Discover({
   const [response, setResponse] = useState<MatchResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false); // collapsed by default on small screens
   const [openId, setOpenId] = useState<string | null>(null);
   const requestSeq = useRef(0);
 
@@ -128,8 +129,14 @@ export default function Discover({
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <aside className="h-fit rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Filters</h2>
-          <FilterPanel filters={filters} onChange={changeFilters} onReset={() => changeFilters({})} />
+          <button type="button" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen} aria-controls="filter-panel"
+            className="flex min-h-11 w-full items-center justify-between text-sm font-semibold uppercase tracking-wide text-slate-500 lg:pointer-events-none lg:mb-3 lg:min-h-0">
+            <span>Filters{Object.values(filters).some((v) => v !== undefined) ? ' (active)' : ''}</span>
+            <span aria-hidden className="lg:hidden">{filtersOpen ? '−' : '+'}</span>
+          </button>
+          <div id="filter-panel" className={`${filtersOpen ? 'mt-3 block' : 'hidden'} lg:block`}>
+            <FilterPanel filters={filters} onChange={changeFilters} onReset={() => changeFilters({})} />
+          </div>
         </aside>
 
         <section aria-live="polite" className="space-y-4">
@@ -140,7 +147,7 @@ export default function Discover({
             </div>
             <label className="text-sm text-slate-600">
               Sort by{' '}
-              <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm">
+              <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} className="min-h-10 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm">
                 <option value="compatibility">Compatibility</option>
                 <option value="price">Price (low to high)</option>
                 <option value="distance">Distance from campus</option>
