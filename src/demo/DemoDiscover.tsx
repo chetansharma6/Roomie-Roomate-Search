@@ -93,7 +93,7 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
       </nav>
       <header className="discovery-heading">
         <h1>Discover roommates</h1>
-        <p className="discovery-caption">Demo · Fictional profiles. Decisions stay in this demo.</p>
+        <p className="discovery-caption">Demo · {demoProfiles.length} fictional student profiles. No verification or decisions are saved.</p>
       </header>
 
       <div className="swipe-deck">
@@ -158,9 +158,21 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
           <>
             <div className="demo-sheet-facts"><ProfileFacts profile={selected} /></div>
             <p>{selected.bio}</p>
+            <section aria-labelledby="demo-likes-title">
+              <h3 id="demo-likes-title" className="font-semibold">Likes</h3>
+              <ul className="student-tags">{selected.interests.map((interest) => <li key={interest}>{interest}</li>)}</ul>
+            </section>
+            <section aria-labelledby="demo-dislikes-title">
+              <h3 id="demo-dislikes-title" className="mt-3 font-semibold">Would rather avoid</h3>
+              <ul className="student-tags">{selected.dislikes.map((dislike) => <li key={dislike}>{dislike}</li>)}</ul>
+            </section>
             <dl className="lifestyle-list">
               <div><dt>Cleanliness</dt><dd>{cleanlinessLabels[selected.cleanliness]}</dd></div>
               <div><dt>Sleep schedule</dt><dd>{sleepLabels[selected.sleepSchedule]}</dd></div>
+              <div><dt>Noise</dt><dd>{selected.noiseTolerance}</dd></div>
+              <div><dt>Guests</dt><dd>{selected.guestFrequency}</dd></div>
+              <div><dt>Pets</dt><dd>{selected.petPreference.replace('_', ' ')}</dd></div>
+              <div><dt>Smoking</dt><dd>{selected.smoking.replace('_', ' ')}</dd></div>
             </dl>
           </>
         )}
