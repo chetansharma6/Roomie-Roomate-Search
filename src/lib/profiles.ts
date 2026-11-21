@@ -5,7 +5,7 @@ import { validateId, validateProfileInput, type ProfileInput } from './profileVa
 export type { ProfileInput } from './profileValidation'
 
 // Fixed allowlist: private columns added in future migrations are never selected.
-export const PROFILE_COLUMNS = 'id,display_name,university,university_id,major,academic_year,bio,photo_url,budget_min,budget_max,distance_from_campus_miles,roommates_wanted,move_in_date,cleanliness,sleep_schedule,noise_tolerance,pet_preference,monthly_rent,room_type,study_environment,guest_frequency,smoking,dealbreakers,housing_status,interests,is_active,verified_university_email,created_at,updated_at'
+export const PROFILE_COLUMNS = 'id,display_name,university,university_id,major,academic_year,bio,photo_url,lifestyle_details,budget_min,budget_max,distance_from_campus_miles,roommates_wanted,move_in_date,cleanliness,sleep_schedule,noise_tolerance,pet_preference,monthly_rent,room_type,study_environment,guest_frequency,smoking,dealbreakers,housing_status,interests,is_active,verified_university_email,created_at,updated_at'
 
 export async function getMyProfile(): Promise<ProfileRow | null> {
   return withDataAccess(async ({ client, user }) => {

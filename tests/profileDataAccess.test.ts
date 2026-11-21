@@ -1,4 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { toPromptProfile } from '../api/_lib/prompt'
+import { rowToProfile } from '../src/lib/profileMapper'
+import { getProfileTags } from '../src/lib/profileTags'
 import type { ProfileInput } from '../src/lib/profiles'
 
 const mocks = vi.hoisted(() => ({ getCurrentUser: vi.fn(), getAuthClient: vi.fn(), from: vi.fn() }))
@@ -74,6 +77,38 @@ describe('profile data access', () => {
     expect(await upsertMyProfile(input)).toEqual({ id: me })
     expect(calls.find((call) => call.method === 'insert')?.args[0]).toMatchObject({ id: me, display_name: 'Student' })
   })
+  it('persists exact quiz choices and derives tags without adding them to the matching prompt', async () => {
+    const lifestyle_details = {
+      temperature: 'warm', bedtime: '10_to_midnight', guests: 'weekly', chores: 'rotate',
+      priorities: ['pets', 'quiet'],
+    } satisfies NonNullable<ProfileInput['lifestyle_details']>
+    const row = {
+      ...input, id: me, university_id: 'usf', move_in_date: '2027-01-05',
+      sleep_schedule: 'flexible', guest_frequency: 'sometimes', lifestyle_details,
+    }
+    results.push({ data: row, error: null })
+    await upsertMyProfile({ ...input, lifestyle_details, sleep_schedule: 'flexible', guest_frequency: 'sometimes' })
+    expect(calls.find((call) => call.method === 'update')?.args[0]).toMatchObject({ lifestyle_details })
+    const saved = rowToProfile(row)!
+    expect(getProfileTags(saved)).toEqual([
+      'Bedtime between 10 and midnight', 'Hosts about once a week', 'Likes a warm home', 'Rotates chores',
+    ])
+    expect(saved.lifestyleDetails?.priorities).toEqual(['pets', 'quiet'])
+    expect(toPromptProfile(saved)).toMatchObject({ sleepSchedule: 'flexible', guestFrequency: 'sometimes' })
+    expect(toPromptProfile(saved)).not.toHaveProperty('lifestyleDetails')
+  })
+
+  it('rejects duplicate or excess priorities before writing the quiz', async () => {
+    const lifestyle = {
+      temperature: 'cool', bedtime: 'varies', guests: 'rarely', chores: 'divide',
+    } as const
+    for (const priorities of [['pets', 'pets'], ['pets', 'quiet', 'guests']] as const) {
+      await expect(upsertMyProfile({ ...input, lifestyle_details: { ...lifestyle, priorities: [...priorities] } }))
+        .rejects.toMatchObject({ code: 'validation' })
+    }
+    expect(mocks.from).not.toHaveBeenCalled()
+  })
+
   it('retries an owner update if another tab creates the profile concurrently', async () => {
     results.push({ data: null, error: null }, { data: null, error: { code: '23505' } }, { data: { id: me }, error: null })
     expect(await upsertMyProfile(input)).toEqual({ id: me })

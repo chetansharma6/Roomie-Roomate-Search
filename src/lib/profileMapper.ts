@@ -1,3 +1,4 @@
+import { lifestyleDetailsSchema } from './lifestyleDetails.js';
 import type { RoommateProfile } from '../types/profile.js';
 
 export function parseProfilePhotoUrl(value: unknown): string | undefined {
@@ -71,6 +72,7 @@ export function rowToProfile(row: Row): RoommateProfile | null {
         )
       : undefined,
     photoUrl: parseProfilePhotoUrl(row.photo_url),
+    lifestyleDetails: lifestyleDetailsSchema.safeParse(row.lifestyle_details).data,
     major: str(row.major),
     academicYear: oneOf(row.academic_year, ['freshman', 'sophomore', 'junior', 'senior', 'graduate']),
   };

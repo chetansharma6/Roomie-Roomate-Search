@@ -1,3 +1,5 @@
+import type { LifestyleDetails } from '../lib/lifestyleDetails';
+
 /** Existing camelCase application contract; keep Person 3's matching types canonical. */
 export type { RoommateProfile } from './profile';
 import type {
@@ -25,6 +27,7 @@ export interface ProfileRow {
   academic_year: AcademicYear | null;
   bio: string | null;
   photo_url?: string | null;
+  lifestyle_details?: LifestyleDetails | null;
   budget_min: number;
   budget_max: number;
   distance_from_campus_miles: number;
@@ -49,7 +52,7 @@ export interface ProfileRow {
 }
 
 type OptionalProfileFields = 'major' | 'academic_year' | 'noise_tolerance' | 'room_type' |
-  'study_environment' | 'smoking' | 'dealbreakers' | 'interests';
+  'study_environment' | 'smoking' | 'dealbreakers' | 'interests' | 'lifestyle_details';
 
 export type ProfileWrite = Pick<ProfileRow,
   'display_name' | 'bio' | 'photo_url' | 'budget_min' | 'budget_max' |
