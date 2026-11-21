@@ -13,7 +13,8 @@
     "test": "vitest run",
     "smoke:gemini": "node --env-file-if-exists=.env.local --import tsx scripts/smoke-gemini.ts",
     "supabase:serve": "npx supabase functions serve roommate-insights --env-file supabase/functions/.env",
-    "supabase:deploy": "npx supabase functions deploy roommate-insights --use-api"
+    "supabase:deploy": "npx supabase functions deploy roommate-insights --use-api",
+    "supabase:db:push": "npx supabase db push"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.3.0",

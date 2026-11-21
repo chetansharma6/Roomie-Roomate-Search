@@ -1,4 +1,16 @@
 project_id = "xcelqqmncgeveawkumje"
 
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/signup"]
+
+[auth.email]
+enabled = true
+enable_confirmations = true
+
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/public/hook_restrict_signup_by_email_domain"
+
 [functions.roommate-insights]
 verify_jwt = true
