@@ -77,7 +77,7 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
   }
 
   return (
-    <main className="discovery demo-discovery" id="main-content">
+    <main className={embedded ? "discovery demo-discovery demo-discovery-embedded" : "discovery demo-discovery"} id="main-content">
       <nav className="discovery-nav" aria-label="Discover navigation">
         {!embedded && <Link className="discovery-back" to="/"><ArrowLeft size={17} aria-hidden="true" /> <span>Back to home</span></Link>}
         {profile && (
