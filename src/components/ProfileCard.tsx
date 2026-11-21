@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { ArrowRight, BadgeCheck, CalendarDays, MapPin, Users, Wallet } from 'lucide-react';
 import type { RoommateProfile } from '../types/RoommateProfile';
 
 interface ProfileCardProps {
   profile: RoommateProfile;
   matchScore?: number;
+  showBio?: boolean;
   onViewProfile?: (profile: RoommateProfile) => void;
 }
 
@@ -21,7 +23,8 @@ export const sleepLabels: Record<RoommateProfile['sleepSchedule'], string> = {
   early: 'Early riser', night: 'Night owl', flexible: 'Flexible schedule',
 };
 
-export function ProfileCard({ profile, matchScore, onViewProfile }: ProfileCardProps) {
+export function ProfileCard({ profile, matchScore, showBio = true, onViewProfile }: ProfileCardProps) {
+  const [failedPhoto, setFailedPhoto] = useState<string>();
   const initials = profile.name.trim().split(/\s+/).slice(0, 2).map((word) => word[0]).join('');
   const moveIn = new Date(profile.moveInDate);
   const moveInLabel = Number.isNaN(moveIn.getTime()) ? 'Flexible' : moveInFormatter.format(moveIn);
@@ -32,8 +35,13 @@ export function ProfileCard({ profile, matchScore, onViewProfile }: ProfileCardP
 
   return (
     <article className="profile-card">
+      <div className={`profile-photo ${hasRoom ? 'profile-photo-peach' : ''}`} aria-hidden="true">
+        {profile.photoUrl && profile.photoUrl !== failedPhoto ? (
+          <img key={profile.photoUrl} src={profile.photoUrl} alt="" draggable={false}
+            onError={() => setFailedPhoto(profile.photoUrl)} />
+        ) : <span>{initials}</span>}
+      </div>
       <header className="profile-header">
-        <span className={`avatar ${hasRoom ? 'avatar-peach' : ''}`} aria-hidden="true">{initials}</span>
         <div>
           <h2 className="profile-name">{profile.name}</h2>
           <p className="profile-subtitle">{profile.major} · {profile.university}</p>
@@ -50,7 +58,7 @@ export function ProfileCard({ profile, matchScore, onViewProfile }: ProfileCardP
           <span className="chip chip-green">{Math.round(matchScore)}% match</span>
         )}
       </div>
-      <p className="profile-bio">{profile.bio}</p>
+      {showBio && <p className="profile-bio">{profile.bio}</p>}
       <dl className="profile-facts">
         <div><dt><Wallet aria-hidden="true" /> {hasRoom ? 'Monthly rent' : 'Monthly budget'}</dt><dd>{monthlyRent}</dd></div>
         <div><dt><MapPin aria-hidden="true" /> Campus distance</dt><dd>{profile.distanceMiles} mi</dd></div>

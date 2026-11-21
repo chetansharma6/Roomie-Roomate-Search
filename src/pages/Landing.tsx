@@ -16,7 +16,7 @@ export function Landing() {
           <h1 id="hero-title">Find your place.<br /><span>Find your people.</span></h1>
           <p>Find college roommates who fit your budget, move-in plans, and the way you like to live.</p>
           <div className="hero-actions">
-            <Link className="button button-primary" to="/discover">Explore roommates <ArrowRight size={18} aria-hidden="true" /></Link>
+            <Link className="button button-primary hero-discover" to="/discover">Discover <ArrowRight size={18} aria-hidden="true" /></Link>
             <a className="button button-outline" href="#preview">Try the preview <ArrowDown size={17} aria-hidden="true" /></a>
           </div>
         </div>

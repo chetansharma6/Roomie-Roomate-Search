@@ -17,6 +17,9 @@ const env: MatchEnv = {
   GEMINI_API_KEY: 'k',
 };
 
+const confirmedUser = { id: 'me', email_confirmed_at: '2026-11-21T00:00:00Z' };
+const userToken = 'user-jwt';
+
 const base = {
   university_id: 'usf', bio: 'hello', budget_min: 700, budget_max: 900, distance_from_campus_miles: 2,
   move_in_date: '2027-08-01T00:00:00Z', roommates_wanted: 2, housing_status: 'need_room',
@@ -61,23 +64,26 @@ describe('createSupabaseRepository (mocked REST)', () => {
       const rows = String(url).includes('limit=1') ? [row('me')] : [row('me'), row('a'), { id: 'broken' }];
       return { ok: true, status: 200, json: async () => rows } as Response;
     });
-    const repo = createSupabaseRepository(env, fetchImpl as unknown as typeof fetch);
+    const repo = createSupabaseRepository(env, userToken, fetchImpl as unknown as typeof fetch);
     expect((await repo.getProfile('me'))?.id).toBe('me');
     expect((await repo.listProfiles('usf')).map((p) => p.id)).toEqual(['me', 'a']); // 'broken' dropped
 
     const [firstUrl, init] = fetchImpl.mock.calls[0]!;
     expect(firstUrl).toContain('https://proj.supabase.co/rest/v1/profiles?id=eq.me');
-    expect(((init as RequestInit).headers as Record<string, string>).apikey).toBe('sb_secret_x');
+    expect((init as RequestInit).headers).toEqual({
+      apikey: env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${userToken}`,
+    });
   });
 
   it('url-encodes ids so a crafted id cannot add PostgREST filters', async () => {
     const fetchImpl = vi.fn(async (...args: [string | URL, RequestInit?]) => ({ ok: true, status: 200, json: async () => [args.length] }) as unknown as Response);
-    await createSupabaseRepository(env, fetchImpl as unknown as typeof fetch).getProfile('x&select=email');
+    await createSupabaseRepository(env, userToken, fetchImpl as unknown as typeof fetch).getProfile('x&select=email');
     expect(String(fetchImpl.mock.calls[0]![0])).toContain('id=eq.x%26select%3Demail');
   });
 
   it('verifyAccessToken sends the user token (not the secret key) to Supabase Auth', async () => {
-    const fetchImpl = vi.fn(async (...args: [string | URL, RequestInit?]) => ({ ok: true, status: 200, json: async () => ({ id: 'me', n: args.length }) }) as unknown as Response);
+    const fetchImpl = vi.fn(async (...args: [string | URL, RequestInit?]) => ({ ok: true, status: 200, json: async () => ({ ...confirmedUser, n: args.length }) }) as unknown as Response);
     expect(await verifyAccessToken('user-jwt', env, fetchImpl as unknown as typeof fetch)).toBe('me');
     const init = fetchImpl.mock.calls[0]![1] as RequestInit;
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer user-jwt');
@@ -95,7 +101,7 @@ describe('authenticated profiles -> matching (mocked Supabase + Gemini)', () => 
     ];
     const fetchImpl = vi.fn(async (url: string | URL) => {
       const u = String(url);
-      if (u.includes('/auth/v1/user')) return { ok: true, status: 200, json: async () => ({ id: 'me' }) } as Response;
+      if (u.includes('/auth/v1/user')) return { ok: true, status: 200, json: async () => confirmedUser } as Response;
       return { ok: true, status: 200, json: async () => (u.includes('limit=1') ? rows.slice(0, 1) : rows) } as Response;
     });
     const generate = vi.fn<GenerateFn>(async () =>

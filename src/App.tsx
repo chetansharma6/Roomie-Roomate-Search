@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react';
-import { Link, Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
+import { lazy, Suspense, useLayoutEffect } from 'react';
+import { Link, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { DemoDiscover } from './demo/DemoDiscover';
 import { Landing } from './pages/Landing';
@@ -57,12 +57,19 @@ function DiscoveryRoute({ embedded }: { embedded: boolean }) {
 }
 
 export function App() {
+  const { user } = useAuth();
   const [params] = useSearchParams();
-  const embedded = params.get('preview') === '1' && window.self !== window.top;
+  const discovering = useLocation().pathname.replace(/\/+$/, '').toLowerCase() === '/discover';
+  const embedded = discovering && params.get('preview') === '1' && window.self !== window.top;
+  const showSiteChrome = !discovering || (!embedded && Boolean(user));
+
+  useLayoutEffect(() => {
+    if (discovering) window.scrollTo(0, 0);
+  }, [discovering]);
 
   return (
     <>
-      <Navbar embedded={embedded} />
+      {showSiteChrome && <Navbar />}
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/discover" element={<DiscoveryRoute embedded={embedded} />} />
@@ -77,7 +84,7 @@ export function App() {
         } />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
-      {!embedded && <footer className="site-footer"><div className="shell">Roomie · HackJam 2026</div></footer>}
+      {showSiteChrome && <footer className="site-footer"><div className="shell">Roomie · HackJam 2026</div></footer>}
     </>
   );
 }
