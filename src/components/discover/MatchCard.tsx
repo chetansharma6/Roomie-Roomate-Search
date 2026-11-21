@@ -21,12 +21,12 @@ export function MatchCard({ profile, match, source, selected, onOpen }: Props) {
           </p>
         </div>
         {match && (
-          <div className="text-right">
+          <div className="shrink-0 text-right">
             <span className={`inline-block rounded-full px-3 py-1 text-sm font-bold ring-1 ${scoreTone(match.compatibilityScore)}`}
               aria-label={`${match.compatibilityScore}% estimated compatibility`}>
               {match.compatibilityScore}%
             </span>
-            <p className="mt-0.5 text-[10px] uppercase tracking-wide text-slate-400">
+            <p className="mt-0.5 whitespace-nowrap text-[10px] uppercase tracking-wide text-slate-400">
               {source === 'gemini' ? 'AI estimate' : 'baseline estimate'}
             </p>
           </div>
@@ -39,7 +39,7 @@ export function MatchCard({ profile, match, source, selected, onOpen }: Props) {
         <div>{profile.roommatesWanted} roommate{profile.roommatesWanted === 1 ? '' : 's'}</div>
       </dl>
       {match && <p className="mt-3 text-sm text-slate-700">{match.summary}</p>}
-      <button type="button" onClick={onOpen} className="mt-4 self-start rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700">
+      <button type="button" onClick={onOpen} className="mt-4 min-h-11 self-start rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">
         {match ? 'View match details' : 'View profile'}
       </button>
     </article>

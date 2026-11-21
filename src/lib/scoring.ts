@@ -16,6 +16,22 @@ export const DEFAULT_WEIGHTS = {
 export type Dimension = keyof typeof DEFAULT_WEIGHTS;
 export type Weights = Record<Dimension, number>;
 
+/**
+ * A weighted average lets many small agreements hide one deal-level clash
+ * (smoker vs smoke-free, pet-free vs pet owner scored 92-94). Serious clashes
+ * therefore cap the overall score, so they can never be labelled a strong match.
+ */
+export const CONFLICT_CAPS = {
+  /** pets / smoking dimension scored 0 (direct clash). */
+  direct: 50,
+  /** a core day-to-day dimension (cleanliness, sleep, noise, guests) scored below CORE_CLASH. */
+  core: 70,
+} as const;
+const CORE_CLASH = 0.3;
+/** Fraction of total weight that must have data on both sides before a score is taken at face value. */
+const MIN_CONFIDENT_COVERAGE = 0.5;
+const CORE_DIMENSIONS: readonly Dimension[] = ['cleanliness', 'sleep', 'noise', 'guests'];
+
 export interface DimensionScore {
   key: Dimension;
   label: string;
@@ -144,8 +160,18 @@ export function scoreCompatibility(
   const used = dimensions.filter((d) => d.score !== null && d.weight > 0);
   const totalWeight = used.reduce((sum, d) => sum + d.weight, 0);
   // With no usable data, return a neutral midpoint rather than implying a match or a clash.
-  const score =
+  const rawAverage =
     totalWeight === 0 ? 50 : Math.round((100 * used.reduce((sum, d) => sum + d.weight * (d.score as number), 0)) / totalWeight);
+  // Little shared data is weak evidence: pull toward neutral (50) until at least half the weight is covered.
+  const coverage = Math.min(1, totalWeight / MIN_CONFIDENT_COVERAGE);
+  const average = totalWeight === 0 ? 50 : Math.round(50 + (rawAverage - 50) * coverage);
+  const directClash = used.some((d) => (d.key === 'pets' || d.key === 'smoking') && d.score === 0);
+  const coreClash = used.some((d) => CORE_DIMENSIONS.includes(d.key) && (d.score as number) < CORE_CLASH);
+  const score = directClash
+    ? Math.min(average, CONFLICT_CAPS.direct)
+    : coreClash
+      ? Math.min(average, CONFLICT_CAPS.core)
+      : average;
 
   return { score, dimensions, sharedInterests: interestResult.shared };
 }

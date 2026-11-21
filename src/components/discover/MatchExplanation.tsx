@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { MatchResult, MatchSource, RoommateProfile } from '../../types/profile.js';
 import { SourceBadge } from './SourceBadge.js';
 import { pretty, scoreTone } from './labels.js';
@@ -18,7 +19,7 @@ function List({ title, items, icon, tone }: { title: string; items: string[]; ic
       <h4 className={`text-sm font-semibold ${tone}`}>{title}</h4>
       <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
         {items.map((item) => (
-          <li key={item} className="flex gap-2">
+          <li key={`${icon}-${item}`} className="flex gap-2">
             <span aria-hidden className={tone}>{icon}</span>
             <span>{item}</span>
           </li>
@@ -29,6 +30,11 @@ function List({ title, items, icon, tone }: { title: string; items: string[]; ic
 }
 
 export function MatchExplanation({ profile, match, source, model, disclaimer, onClose }: Props) {
+  useEffect(() => {
+    const onKey = (ev: KeyboardEvent) => ev.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label={`Match details for ${profile.displayName}`} onClick={onClose}>
       <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
@@ -37,7 +43,7 @@ export function MatchExplanation({ profile, match, source, model, disclaimer, on
             <h3 className="text-lg font-semibold">{profile.displayName}</h3>
             <p className="text-xs text-slate-500">{pretty(profile.housingStatus)} · {profile.distanceFromCampusMiles} mi from campus</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded p-1 text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
+          <button type="button" onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
