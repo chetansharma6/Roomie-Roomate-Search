@@ -142,7 +142,7 @@ button { cursor: pointer; }
   position: absolute; border-radius: 1rem; box-shadow: 0 0 0 3px var(--color-roomie-mint), 0 0 0 200vmax #152e26ba;
 }
 .swipe-hand {
-  position: absolute; top: calc(50% - 1.25rem); left: 50%; translate: -50% 0; display: grid; place-items: center;
+  position: absolute; top: calc(var(--swipe-hand-y, 50%) - 1.25rem); left: 50%; translate: -50% 0; display: grid; place-items: center;
   width: 2.5rem; height: 2.5rem; border-radius: 50%; color: var(--color-roomie-teal); background: var(--color-roomie-paper);
   box-shadow: 0 2px 10px #192a2540; opacity: 0;
   animation: demonstrate-swipe 1.65s ease-in-out both;
@@ -308,6 +308,9 @@ button { cursor: pointer; }
 .student-tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-block: .65rem; }
 .student-tags li { padding: .3rem .6rem; border-radius: 1rem; background: var(--color-roomie-mint); color: var(--color-roomie-teal); font-size: .75rem; font-weight: 750; }
 .student-more { margin-top: .4rem; border-color: var(--color-roomie-line); background: var(--color-roomie-mint); color: var(--color-roomie-teal); }
+.profile-action-desktop { display: inline-flex; align-items: center; gap: .55rem; }
+.profile-action-mobile, .demo-sheet-facts, .discover-close-label, .student-mobile-university { display: none; }
+.student-housing-facts dt svg { display: none; }
 .student-details { width: min(37rem, 100% - 2rem); }
 .student-deck-message { display: grid; justify-items: center; gap: .65rem; padding: 2rem 1rem; text-align: center; }
 .student-deck-message h2 { font-weight: 800; }
@@ -336,37 +339,140 @@ button { cursor: pointer; }
   .student-swipe-stage { position: relative; display: block; max-width: none; }
   .student-profile { position: relative; display: flex; min-height: 100dvh; align-items: flex-end; border: 0; border-radius: 0; color: white; }
   .student-photo { position: absolute; inset: 0; aspect-ratio: auto; background: #36594e; color: var(--color-roomie-mint); }
-  .student-photo::after {
+  .student-photo::after, .demo-discovery .profile-photo::after {
     position: absolute; inset: 0; content: '';
-    background: linear-gradient(180deg, #101f1bc9, transparent 22%, transparent 42%, #101f1bc9 78%, #101f1b 100%);
+    background: linear-gradient(180deg, #101f1baa, transparent 24%, transparent 43%, #101f1b9c 76%, #101f1bf5);
   }
+  :is(.student-photo, .demo-discovery .profile-photo) img { object-position: center 35%; }
   .student-profile-copy {
-    position: relative; width: 100%; padding: 1rem clamp(.85rem, 4vw, 1.5rem) max(2rem, env(safe-area-inset-bottom));
+    position: relative; width: 100%; padding: 1rem clamp(.85rem, 4vw, 1.5rem) calc(2rem + env(safe-area-inset-bottom));
     text-shadow: 0 1px 3px #101f1b;
   }
   .student-profile-copy h2 { font-size: clamp(1.55rem, 7vw, 2.15rem); }
   .student-score { color: #d8f1e1; }
   .student-profile-copy .student-tags li { background: #192a25bb; color: white; border: 1px solid #ffffff48; }
-  .student-more {
-    display: flex; width: fit-content; margin: .85rem auto 0; padding-inline: .9rem;
-    border-color: #ffffff68; background: #ffffff26; color: white; backdrop-filter: blur(12px);
+  .student-mobile-university { display: inline; }
+  .student-desktop-housing { display: none; }
+  .discover-more {
+    display: flex; width: fit-content; margin: .85rem auto 0; padding-inline: .95rem;
+    border: 1px solid #ffffff75; border-radius: 999px; color: white;
+    background: #223a31b5;
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
   }
-  .student-swipe-stage .swipe-choice {
-    position: absolute; z-index: 2; bottom: max(2rem, env(safe-area-inset-bottom));
+  .discover-more:hover { background: #20362ed9; }
+  :is(.student-swipe-stage, .demo-discovery .swipe-stage) .swipe-choice {
+    position: absolute; z-index: 2; bottom: calc(2rem + env(safe-area-inset-bottom));
     --control-inset: max(1.1rem, calc((100% - 22rem) / 2));
   }
-  .student-swipe-stage .swipe-choice-pass { left: var(--control-inset); }
-  .student-swipe-stage .swipe-choice-interest { right: var(--control-inset); }
-  .student-swipe-stage .swipe-choice > span:last-child { color: white; text-shadow: 0 1px 3px #101f1b; }
-  .student-details {
-    position: fixed; inset: auto 0 0; width: 100%; max-width: none; max-height: 85dvh; margin: 0;
-    padding-bottom: max(1.25rem, env(safe-area-inset-bottom)); border-radius: 1.2rem 1.2rem 0 0;
-    overscroll-behavior: contain;
+  :is(.student-swipe-stage, .demo-discovery .swipe-stage) .swipe-choice-pass { left: var(--control-inset); }
+  :is(.student-swipe-stage, .demo-discovery .swipe-stage) .swipe-choice-interest { right: var(--control-inset); }
+  :is(.student-swipe-stage, .demo-discovery .swipe-stage) .swipe-choice > span:last-child {
+    color: white; text-shadow: 0 1px 3px #101f1b;
   }
+  html:has(.discover-details[open]) { overflow: hidden; }
+  .discover-details {
+    position: fixed; inset: auto 0 0; width: 100%; max-width: none; max-height: 85dvh; margin: 0;
+    padding: 0 1.25rem calc(1.25rem + env(safe-area-inset-bottom)); border-radius: 1.35rem 1.35rem 0 0;
+    overflow-y: auto; overscroll-behavior: contain;
+    border-color: #ffffff30; color: #faf7ee;
+    background: linear-gradient(165deg, #383d2ddd, #16251de8 72%);
+    -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px);
+  }
+  .discover-details::backdrop { background: #101f1b65; }
+  .discover-details .dialog-top {
+    position: sticky; top: 0; z-index: 1; gap: .5rem; padding-block: .8rem;
+    background: #293326df; -webkit-backdrop-filter: blur(15px); backdrop-filter: blur(15px);
+  }
+  .discover-details .dialog-top .icon-button {
+    display: inline-flex; gap: .3rem; width: auto; padding-inline: .65rem;
+    border: 1px solid #ffffff50; border-radius: 999px; background: #ffffff18; color: inherit;
+  }
+  .discover-details .dialog-top .icon-button:focus-visible { outline-color: #eff6e8; }
+  .discover-details :is(p, .text-slate-500, .text-slate-700) { color: #f3f0e5; }
+  .discover-details :is(.text-emerald-700, .text-amber-700, .text-indigo-700) { color: #dfead3; }
+  .discover-details :is(.profile-facts, .student-housing-facts) {
+    display: grid; grid-template-columns: minmax(0, 1fr); gap: .45rem; padding: 0; border: 0;
+  }
+  .discover-details :is(.profile-facts, .student-housing-facts) > div {
+    display: flex; justify-content: space-between; align-items: center; gap: .4rem .7rem; flex-wrap: wrap;
+    min-height: 2.6rem; padding: .45rem .7rem; border-radius: .75rem; background: #ffffff15;
+  }
+  .discover-details :is(.profile-facts, .student-housing-facts) dt {
+    display: flex; align-items: center; gap: .55rem; color: inherit; font-size: .8rem; font-weight: 650;
+  }
+  .discover-details :is(.profile-facts, .student-housing-facts) dt svg {
+    display: block; flex: 0 0 1rem; width: 1rem; height: 1rem; color: inherit;
+  }
+  .discover-details .profile-facts dd { margin: 0; }
+  .discover-details .lifestyle-list { border-color: #ffffff33; }
+  .discover-details .student-tags li { background: #506149; color: #fffdf5; }
+  .discover-details .demo-sheet-facts .profile-facts > div:last-child { display: none; }
+  .discover-close-label { display: inline; font-size: .8rem; font-weight: 800; }
+  .demo-sheet-facts { display: block; }
+  .demo-discovery:has(.swipe-stage) { position: relative; display: block; padding: 0; }
+  .demo-discovery:has(.swipe-stage) .discovery-nav {
+    position: absolute; z-index: 3; inset: 0 0 auto; padding: max(.4rem, env(safe-area-inset-top)) .75rem 0;
+  }
+  .demo-discovery:has(.swipe-stage) :is(.discovery-back, .swipe-help) {
+    padding-inline: .6rem; border-radius: 999px; color: white; background: #182e26b3;
+  }
+  .demo-discovery:has(.swipe-stage) .discovery-back { width: 2.75rem; justify-content: center; }
+  .demo-discovery:has(.swipe-stage) .discovery-back span {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .demo-discovery:has(.swipe-stage) .discovery-heading {
+    position: absolute; z-index: 2; top: calc(3.25rem + env(safe-area-inset-top)); inset-inline: .75rem;
+    width: fit-content; color: white; text-align: left; pointer-events: none;
+  }
+  .demo-discovery:has(.swipe-stage) .discovery-heading h1 { font-size: .95rem; }
+  .demo-discovery:has(.swipe-stage) .discovery-caption { color: white; text-shadow: 0 1px 3px #101f1b; }
+  .demo-discovery:has(.swipe-stage) .swipe-deck { width: 100%; }
+  .demo-discovery:has(.swipe-stage) .swipe-deck > .text-link { display: none; }
+  .demo-discovery .swipe-stage { position: relative; display: block; }
+  .demo-discovery .swipe-card::before { display: none; }
+  .demo-discovery .swipe-card .profile-card {
+    position: relative; min-height: 100dvh; justify-content: flex-end;
+    padding: 1rem clamp(.85rem, 4vw, 1.5rem) calc(2rem + env(safe-area-inset-bottom));
+    border: 0; border-radius: 0; color: white; gap: 0;
+  }
+  .demo-discovery .profile-photo {
+    position: absolute; inset: 0; aspect-ratio: auto; border-radius: 0; background: #36594e; color: var(--color-roomie-mint);
+  }
+  .demo-discovery .profile-header, .demo-discovery .profile-action { position: relative; }
+  .demo-discovery .profile-name { font-size: clamp(1.55rem, 7vw, 2.15rem); }
+  .demo-discovery .profile-subtitle { color: white; }
+  .demo-discovery .profile-header { text-shadow: 0 1px 3px #101f1b; }
+  .demo-discovery .profile-card :is(.profile-badges, .profile-facts, .profile-action-desktop) { display: none; }
+  .demo-discovery .profile-action-mobile { display: inline-flex; align-items: center; gap: .45rem; }
+  .demo-discovery .swipe-spotlight { border-radius: 0; background: linear-gradient(#101f1b55 60%, transparent); }
+  .demo-discovery .swipe-tutorial-panel { inset-block: max(.6rem, env(safe-area-inset-top)) auto; }
   .student-ranking-note, .student-interest-error {
     position: absolute; z-index: 2; top: calc(max(.5rem, env(safe-area-inset-top)) + 2.75rem);
     width: fit-content; margin-inline: auto; inset-inline: .5rem; border-radius: .65rem;
   }
   .student-ranking-note { color: white; background: #192a25c9; }
   .student-interest-error { top: calc(max(.5rem, env(safe-area-inset-top)) + 5.5rem); }
+}
+
+@media (max-width: 720px) and (prefers-reduced-motion: no-preference) {
+  .discover-details[open] { animation: discover-sheet-enter 500ms ease-out; }
+  .discover-details[open]::backdrop { animation: discover-backdrop-enter 500ms ease-out; }
+  .discover-details[open][data-closing] { animation: discover-sheet-exit 500ms ease-out forwards; }
+  .discover-details[open][data-closing]::backdrop { animation: discover-backdrop-exit 500ms ease-out forwards; }
+}
+
+@keyframes discover-sheet-enter {
+  from { transform: translateY(100%); }
+}
+
+@keyframes discover-backdrop-enter {
+  from { opacity: 0; }
+}
+
+@keyframes discover-sheet-exit {
+  to { transform: translateY(100%); }
+}
+
+@keyframes discover-backdrop-exit {
+  to { opacity: 0; }
 }
