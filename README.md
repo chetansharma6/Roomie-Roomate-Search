@@ -136,7 +136,7 @@ The `roommate-insights` Edge Function requires two server-only secrets:
 
 ```dotenv
 GEMINI_API_KEY=your-gemini-api-key
-GEMINI_MODEL=gemini-3.5-flash
+GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
 Set production values in Supabase under **Edge Functions → Secrets**, or with the Supabase CLI:

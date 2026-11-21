@@ -9,7 +9,7 @@ import {
   type RoommateProfile,
 } from '../types/profile.js';
 
-export const CLIENT_TIMEOUT_MS = 50_000;
+export const CLIENT_TIMEOUT_MS = 25_000;
 
 /** Thrown only for problems the user must fix (no fallback can help). */
 export class MatchClientError extends Error {

@@ -60,7 +60,7 @@ describe('input validation', () => {
 
 describe('matching flow', () => {
   it('returns Gemini results labelled as gemini, never including the requester or filtered-out profiles', async () => {
-    const generate = vi.fn(geminiFor('demo-maya'));
+    const generate = vi.fn(geminiFor('demo-maya', 'demo-tyler'));
     const out = await runMatch({ method: 'POST', body: {}, env: demoEnv, deps: { generate } });
     const body = out.json as MatchResponse;
     expect(out.status).toBe(200);
