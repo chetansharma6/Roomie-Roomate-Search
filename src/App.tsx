@@ -1,11 +1,14 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
+import { isAllowedEmailDomain, parseAllowedEmailDomains } from './lib/emailDomains'
 import Discover from './pages/Discover'
 
 interface RoommateInsightsResponse {
   insight: string
 }
+
+const allowedEmailDomains = parseAllowedEmailDomains(import.meta.env.VITE_ALLOWED_EMAIL_DOMAINS)
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -34,6 +37,17 @@ export default function App() {
   async function sendMagicLink(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setMessage('')
+
+    if (allowedEmailDomains.length === 0) {
+      setMessage('University email sign-in is not configured. Please contact the Roomie team.')
+      return
+    }
+
+    if (!isAllowedEmailDomain(email, allowedEmailDomains)) {
+      setMessage(`Use an approved university email address (${allowedEmailDomains.join(', ')}).`)
+      return
+    }
+
     setLoading(true)
 
     const { error } = await supabase.auth.signInWithOtp({
@@ -161,11 +175,15 @@ export default function App() {
               name="email"
               type="email"
               autoComplete="email"
-              placeholder="you@university.edu"
+              placeholder={`you@${allowedEmailDomains[0] ?? 'university.edu'}`}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
             />
+            <small className="auth-hint">
+              Approved domains: {allowedEmailDomains.join(', ') || 'not configured'}.
+              Email verification is required.
+            </small>
             <button type="submit" disabled={loading}>
               {loading ? 'Sending…' : 'Email me a sign-in link'}
             </button>

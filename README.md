@@ -117,6 +117,7 @@ npm test
 npm run smoke:gemini
 npm run supabase:serve
 npm run supabase:deploy
+npm run supabase:db:push
 ```
 
 ## Environment Variables
@@ -126,11 +127,27 @@ Supabase requires client configuration when persistence and authentication are i
 ```dotenv
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
+VITE_ALLOWED_EMAIL_DOMAINS=usf.edu
 ```
 
 Never commit a Supabase service-role key, secret key, or real student data. Vite variables prefixed with `VITE_` are exposed to browser code.
 
 Keep local browser and Vercel Function values in `.env.local`, which is ignored by Git. Only the project URL and publishable key belong in `VITE_` variables. Server-only secrets must never use that prefix or be imported by code under `src/`.
+
+`VITE_ALLOWED_EMAIL_DOMAINS` is a comma-separated UX allowlist. It fails closed when empty, but browser validation is not a security boundary. The database migration in `supabase/migrations/` enforces the same policy through a Supabase **Before User Created** hook. Add a domain explicitly in both places before supporting another university; a generic `.edu` suffix is intentionally not accepted.
+
+## Supabase Authentication Setup
+
+The application uses `signInWithOtp()` with a magic-link redirect to `window.location.origin`. Configure the hosted Supabase project before testing:
+
+1. Under **Authentication → Sign In / Providers → Email**, enable email authentication and keep email confirmation enabled.
+2. Under **Authentication → URL Configuration**, set the Site URL to `http://localhost:5173` for local development. Add `http://localhost:5173` and the exact deployed Vercel origin to the allowed redirect URLs before deployment.
+3. Keep the default magic-link email template. If the UI is later changed to accept a six-digit code, update the appropriate template to display `{{ .Token }}` and add an OTP verification form.
+4. Apply the migrations with `npm run supabase:db:push`.
+5. Under **Authentication → Hooks**, enable **Before User Created**, select the Postgres function `public.hook_restrict_signup_by_email_domain`, and test one allowed and one rejected domain.
+6. Configure custom SMTP before testing arbitrary student addresses or production traffic. Supabase's built-in sender is intended for initial testing, sends only to project-team addresses, and is limited to two authentication emails per hour per project.
+
+Do not disable email confirmation to work around delivery limits. For a demo without custom SMTP, prepare a legitimately verified account and keep its session available; do not represent an unverified or simulated address as verified.
 
 The `roommate-insights` Edge Function requires two server-only secrets:
 
