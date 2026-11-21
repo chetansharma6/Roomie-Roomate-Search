@@ -6,7 +6,7 @@ interface AppPreviewProps {
   route?: string;
 }
 
-export function AppPreview({ route = '/discover' }: AppPreviewProps) {
+export function AppPreview({ route = '/discover?demo=1' }: AppPreviewProps) {
   const [mode, setMode] = useState<'desktop' | 'mobile'>('desktop');
   const frameId = useId();
   const url = new URL(route, window.location.origin);
@@ -19,7 +19,7 @@ export function AppPreview({ route = '/discover' }: AppPreviewProps) {
         <div className="preview-heading">
           <div>
             <h2 id={`${frameId}-heading`}>Try Roomie</h2>
-            <Link className="text-link" to={route}>Open discovery <ArrowUpRight aria-hidden="true" size={16} /></Link>
+            <Link className="text-link" to={route}>Explore demo matches <ArrowUpRight aria-hidden="true" size={16} /></Link>
           </div>
           <div className="view-toggle" role="group" aria-label="Preview layout">
             <button type="button" aria-controls={frameId} aria-pressed={mode === 'desktop'} onClick={() => setMode('desktop')}>

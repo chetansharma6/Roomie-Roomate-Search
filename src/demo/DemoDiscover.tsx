@@ -1,33 +1,29 @@
 import { ArrowLeft, Check, Heart, RotateCcw, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cleanlinessLabels, ProfileCard, sleepLabels } from '../components/ProfileCard';
 import type { RoommateProfile } from '../types/RoommateProfile';
 import { SwipeTutorial, hasDismissedTutorial } from './SwipeTutorial';
+import { useSwipeGesture, type SwipeDecision } from '../hooks/useSwipeGesture';
 import { demoProfiles } from './profiles';
-
-type Decision = 'pass' | 'interested';
-type Drag = { id: number; x: number; y: number; axis?: 'horizontal' | 'vertical' };
 
 const exitDuration = 180;
 
 export function DemoDiscover({ embedded }: { embedded: boolean }) {
   const [selected, setSelected] = useState<RoommateProfile | null>(null);
-  const [decisions, setDecisions] = useState<Partial<Record<string, Decision>>>({});
-  const [offset, setOffset] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const [exit, setExit] = useState<Decision | null>(null);
+  const [decisions, setDecisions] = useState<Partial<Record<string, SwipeDecision>>>({});
+  const [exit, setExit] = useState<SwipeDecision | null>(null);
   const [tutorialOpen, setTutorialOpen] = useState(() => !embedded && !hasDismissedTutorial());
   const stage = useRef<HTMLDivElement>(null);
   const tutorialButton = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
-  const drag = useRef<Drag | null>(null);
   const exitTimer = useRef<number | null>(null);
   const restartButton = useRef<HTMLButtonElement>(null);
   const passButton = useRef<HTMLButtonElement>(null);
   const restoreFocus = useRef(false);
   const restoreTutorialFocus = useRef(false);
 
+  const { dragging, offset, resetDrag, handlers } = useSwipeGesture(decide, tutorialOpen || Boolean(exit));
   const profile = demoProfiles.find(({ id }) => !decisions[id]);
 
   useEffect(() => () => {
@@ -52,13 +48,7 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
     dialog.current?.showModal();
   }
 
-  function resetDrag() {
-    drag.current = null;
-    setDragging(false);
-    setOffset(0);
-  }
-
-  function decide(decision: Decision, keepFocus = false) {
+  function decide(decision: SwipeDecision, keepFocus = false) {
     if (!profile || tutorialOpen || exitTimer.current !== null) return;
     const id = profile.id;
     resetDrag();
@@ -77,43 +67,6 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
 
     setExit(decision);
     exitTimer.current = window.setTimeout(advance, exitDuration);
-  }
-
-  function startDrag(event: PointerEvent<HTMLDivElement>) {
-    if (tutorialOpen || !event.isPrimary || event.button !== 0 || exitTimer.current !== null) return;
-    if ((event.target as Element).closest('button, a')) return;
-    drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-
-  function moveDrag(event: PointerEvent<HTMLDivElement>) {
-    const active = drag.current;
-    if (!active || event.pointerId !== active.id) return;
-    const x = event.clientX - active.x;
-    const y = event.clientY - active.y;
-    if (!active.axis && Math.max(Math.abs(x), Math.abs(y)) >= 10) {
-      active.axis = Math.abs(x) > Math.abs(y) * 1.25 ? 'horizontal' : 'vertical';
-    }
-    if (active.axis === 'horizontal') {
-      setDragging(true);
-      setOffset(x);
-    }
-  }
-
-  function endDrag(event: PointerEvent<HTMLDivElement>) {
-    const active = drag.current;
-    if (!active || event.pointerId !== active.id) return;
-    const x = event.clientX - active.x;
-    const threshold = Math.min(96, event.currentTarget.clientWidth * 0.25);
-    if (active.axis === 'horizontal' && Math.abs(x) >= threshold) {
-      decide(x > 0 ? 'interested' : 'pass');
-    } else {
-      resetDrag();
-    }
-  }
-
-  function cancelDrag(event: PointerEvent<HTMLDivElement>) {
-    if (event.pointerId === drag.current?.id) resetDrag();
   }
 
   return (
@@ -153,11 +106,7 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
               data-dragging={dragging}
               data-exit={exit ?? undefined}
               style={{ transform: exit ? undefined : `translateX(${offset}px) rotate(${Math.max(-12, Math.min(12, offset / 15))}deg)` }}
-              onPointerDown={startDrag}
-              onPointerMove={moveDrag}
-              onPointerUp={endDrag}
-              onPointerCancel={cancelDrag}
-              onLostPointerCapture={cancelDrag}
+              {...handlers}
             >
               <ProfileCard profile={profile} showBio={false} onViewProfile={showProfile} />
             </div>

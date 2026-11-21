@@ -24,9 +24,16 @@ beforeEach(() => {
 })
 
 describe('Roomie auth service', () => {
-  it('normalizes a university email and sends a magic link to the signup callback', async () => {
+  it.each([
+    'http://localhost:5173',
+    'https://roomie-example-5173.app.github.dev',
+  ])('normalizes a university email and uses the browser origin %s for the signup callback', async (origin) => {
+    vi.stubGlobal('window', { location: { origin } })
     await sendMagicLink(' Student@USF.EDU ')
-    expect(mocks.signInWithOtp).toHaveBeenCalledWith({ email: 'student@usf.edu', options: { emailRedirectTo: 'http://localhost:5173/signup' } })
+    expect(mocks.signInWithOtp).toHaveBeenCalledWith({
+      email: 'student@usf.edu',
+      options: { emailRedirectTo: `${origin}/signup` },
+    })
   })
   it.each(['bad-address', 'a@@usf.edu', 'a@usf.edu.evil.com', 'a@gmail.com', 'a@other.edu'])('rejects %s before contacting Supabase', async (email) => {
     expect(isSupportedUniversityEmail(email)).toBe(false)
@@ -57,8 +64,10 @@ describe('Roomie auth service', () => {
   })
   it('routes new and existing profiles, and never treats a query error as a missing profile', async () => {
     mocks.maybeSingle.mockResolvedValueOnce({ data: null, error: null })
-      .mockResolvedValueOnce({ data: { id: 'student-a' }, error: null })
+      .mockResolvedValueOnce({ data: { move_in_date: null }, error: null })
+      .mockResolvedValueOnce({ data: { move_in_date: '2027-01-05' }, error: null })
       .mockResolvedValueOnce({ data: null, error: { code: '42501' } })
+    expect(await getAuthDestination('student-a')).toBe('/onboarding')
     expect(await getAuthDestination('student-a')).toBe('/onboarding')
     expect(await getAuthDestination('student-a')).toBe('/discover')
     await expect(getAuthDestination('student-a')).rejects.toThrow('Could not check your profile')

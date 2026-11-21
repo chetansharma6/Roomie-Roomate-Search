@@ -24,6 +24,7 @@ export interface ProfileRow {
   major: string | null;
   academic_year: AcademicYear | null;
   bio: string | null;
+  photo_url?: string | null;
   budget_min: number;
   budget_max: number;
   distance_from_campus_miles: number;
@@ -47,13 +48,15 @@ export interface ProfileRow {
   updated_at: string;
 }
 
+type OptionalProfileFields = 'major' | 'academic_year' | 'noise_tolerance' | 'room_type' |
+  'study_environment' | 'smoking' | 'dealbreakers' | 'interests';
+
 export type ProfileWrite = Pick<ProfileRow,
-  'display_name' | 'major' | 'academic_year' | 'bio' | 'budget_min' | 'budget_max' |
+  'display_name' | 'bio' | 'photo_url' | 'budget_min' | 'budget_max' |
   'distance_from_campus_miles' | 'roommates_wanted' | 'move_in_date' | 'cleanliness' |
-  'sleep_schedule' | 'noise_tolerance' | 'pet_preference' | 'monthly_rent' | 'room_type' |
-  'study_environment' | 'guest_frequency' | 'smoking' | 'dealbreakers' |
-  'housing_status' | 'interests' | 'is_active'
->;
+  'sleep_schedule' | 'pet_preference' | 'monthly_rent' | 'guest_frequency' |
+  'housing_status' | 'is_active'
+> & Partial<Pick<ProfileRow, OptionalProfileFields>>;
 
 export interface RoommateRequestRow {
   id: string;

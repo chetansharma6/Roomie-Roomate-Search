@@ -1,9 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
-import { authErrorMessage, supportedUniversityDomains } from '../lib/auth'
+import { authErrorMessage, getAuthClient, missingAuthSettings, supportedUniversityDomains } from '../lib/auth'
 import { useAuth } from '../hooks/useAuth'
-import Discover from './Discover'
 
 interface RoommateInsightsResponse {
   insight: string
@@ -17,7 +15,7 @@ export default function SignIn({ redirectAfterSignIn = true }: { redirectAfterSi
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showDiscover, setShowDiscover] = useState(false)
+  const [linkSent, setLinkSent] = useState(false)
   const [profile, setProfile] = useState('')
   const [insight, setInsight] = useState('')
   const [insightLoading, setInsightLoading] = useState(false)
@@ -28,12 +26,13 @@ export default function SignIn({ redirectAfterSignIn = true }: { redirectAfterSi
 
   async function requestMagicLink(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (loading || missingAuthSettings.length) return
     setMessage('')
-
+    setLinkSent(false)
     setLoading(true)
     try {
       await sendMagicLink(email)
-      setMessage('Check your email for the secure sign-in link.')
+      setLinkSent(true)
     } catch (error) { setMessage(authErrorMessage(error)) }
     finally { setLoading(false) }
   }
@@ -44,6 +43,7 @@ export default function SignIn({ redirectAfterSignIn = true }: { redirectAfterSi
       await signOut()
       setInsight('')
       setProfile('')
+      setLinkSent(false)
       setMessage('')
     } catch (error) { setMessage(authErrorMessage(error)) }
     finally { setLoading(false) }
@@ -55,37 +55,19 @@ export default function SignIn({ redirectAfterSignIn = true }: { redirectAfterSi
     setInsight('')
     setInsightLoading(true)
 
-    const { data, error } = await supabase.functions.invoke<RoommateInsightsResponse>(
-      'roommate-insights',
-      { body: { profile } },
-    )
-
-    if (error || !data?.insight) {
-      setMessage('Roommate insights are unavailable right now. Please try again.')
-    } else {
+    try {
+      const client = await getAuthClient()
+      const { data, error } = await client.functions.invoke<RoommateInsightsResponse>(
+        'roommate-insights',
+        { body: { profile } },
+      )
+      if (error || !data?.insight) throw error ?? new Error('Missing insight')
       setInsight(data.insight)
+    } catch {
+      setMessage('Roommate insights are unavailable right now. Please try again.')
+    } finally {
+      setInsightLoading(false)
     }
-
-    setInsightLoading(false)
-  }
-
-  if (showDiscover) {
-    return (
-      <main id="main-content" className="min-h-screen bg-slate-50 text-slate-900">
-        <div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6">
-          <button type="button" className="button button-outline" onClick={() => setShowDiscover(false)}>
-            ← Back
-          </button>
-        </div>
-        {/* Signed in: Discover asks /api/match, which verifies this token server-side and loads the
-            student's profile and same-university candidates from Supabase (needs Person 2's profiles table). */}
-        {session ? (
-          <Discover currentUser={null} accessToken={session.access_token} />
-        ) : (
-          <Discover />
-        )}
-      </main>
-    )
   }
 
   return (
@@ -159,25 +141,34 @@ export default function SignIn({ redirectAfterSignIn = true }: { redirectAfterSi
               autoComplete="email"
               placeholder={`you@${allowedEmailDomains[0] ?? 'university.edu'}`}
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value)
+                setLinkSent(false)
+                setMessage('')
+              }}
+              disabled={loading}
               required
             />
             <small className="auth-hint">
               Approved domains: {allowedEmailDomains.join(', ') || 'not configured'}.
               Email verification is required.
             </small>
-            <button type="submit" disabled={loading}>
+            {missingAuthSettings.length > 0 && (
+              <p className="message" role="status">
+                University sign-in needs Supabase configuration. In local development, set{' '}
+                <code>{missingAuthSettings.join(', ')}</code> in <code>.env.local</code> and restart the dev server.
+              </p>
+            )}
+            <button type="submit" disabled={loading || missingAuthSettings.length > 0}>
               {loading ? 'Sending…' : 'Email me a sign-in link'}
             </button>
           </form>
         )}
 
-        <p>
-          <button type="button" onClick={() => setShowDiscover(true)}>
-            {session ? 'Find roommates' : 'Explore demo matches (fictional data)'}
-          </button>
-        </p>
+        {session && <p><Link className="text-link" to="/discover">Find roommates</Link></p>}
+        <p><Link className="text-link" to="/discover?demo=1">Explore demo matches</Link> (fictional profiles)</p>
 
+        {!session && linkSent && <p role="status" className="message">Check your university inbox for the sign-in link.</p>}
         {message && <p role="alert" className="message">{message}</p>}
         {authError && <p role="alert" className="message">{authError} <button type="button" onClick={() => void refresh()}>Retry session</button></p>}
       </section>
