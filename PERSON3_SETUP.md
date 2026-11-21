@@ -151,6 +151,6 @@ Import the repo; add `GEMINI_API_KEY` (and Supabase vars) in project settings. `
 
 - `npm run smoke:gemini` passed against the live `gemini-3.5-flash-lite` API (fictional demo data only); re-run it after changing the prompt or model.
 - Rate limiting and the response cache are in-memory per serverless instance (best-effort). The client also caches unchanged requests.
-- Gemini analyses the top 10 candidates by baseline score; in AI mode only those are shown.
+- Gemini analyses the top 10 candidates by baseline score within a 20-second model timeout; the browser waits up to 25 seconds and the Vercel Function is capped at 30 seconds. In AI mode only those candidates are shown.
 - The profile fields for lifestyle and `monthly_rent` are my proposal; Person 2 must confirm the schema.
 - No pagination, saved matches, or messaging.
