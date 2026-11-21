@@ -57,9 +57,11 @@ function DiscoveryRoute({ embedded }: { embedded: boolean }) {
 }
 
 export function App() {
+  const { user } = useAuth();
   const [params] = useSearchParams();
   const discovering = useLocation().pathname.replace(/\/+$/, '').toLowerCase() === '/discover';
   const embedded = discovering && params.get('preview') === '1' && window.self !== window.top;
+  const showSiteChrome = !discovering || (!embedded && Boolean(user));
 
   useLayoutEffect(() => {
     if (discovering) window.scrollTo(0, 0);
@@ -67,7 +69,7 @@ export function App() {
 
   return (
     <>
-      {!discovering && <Navbar />}
+      {showSiteChrome && <Navbar />}
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/discover" element={<DiscoveryRoute embedded={embedded} />} />
@@ -82,7 +84,7 @@ export function App() {
         } />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
-      {!discovering && <footer className="site-footer"><div className="shell">Roomie · HackJam 2026</div></footer>}
+      {showSiteChrome && <footer className="site-footer"><div className="shell">Roomie · HackJam 2026</div></footer>}
     </>
   );
 }
