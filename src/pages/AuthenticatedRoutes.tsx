@@ -37,11 +37,11 @@ export function StudentDiscover() {
   const currentResult = result && result.userId === userId && result.attempt === attempt
     ? result
     : null
-  if (currentResult?.error) return <main className="shell route-notice"><p role="alert">{currentResult.error}</p><button onClick={() => setAttempt((n) => n + 1)}>Retry</button></main>
+  if (currentResult?.error) return <main id="main-content" className="shell route-notice"><p role="alert">{currentResult.error}</p><button className="button button-outline" onClick={() => setAttempt((n) => n + 1)}>Retry</button></main>
   const profiles = currentResult?.profiles
-  if (!profiles) return <main className="shell route-notice" role="status">Loading student profiles…</main>
+  if (!profiles) return <main id="main-content" className="shell route-notice" role="status">Loading student profiles…</main>
   const current = currentResult.profile
-  if (!current || !session) return <main className="shell route-notice"><h1>Complete your profile</h1><p>An active profile with a move-in date is needed for discovery.</p><Link to="/profile">Edit profile</Link></main>
+  if (!current || !session) return <main id="main-content" className="shell route-notice"><h1>Complete your profile</h1><p>An active profile with a move-in date is needed for discovery.</p><Link to="/profile">Edit profile</Link></main>
   return <>
     <div className="shell student-desktop-chrome"><Link to="/profile">Edit profile</Link> · <Link to="/account">Account and sign out</Link></div>
     <RoommateRequestInbox profiles={profiles} />

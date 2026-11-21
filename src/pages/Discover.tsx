@@ -113,7 +113,7 @@ export default function Discover({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="matching-page mx-auto max-w-6xl px-4 py-6 sm:px-6">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Discover roommates</h1>
@@ -123,7 +123,7 @@ export default function Discover({
           </p>
         </div>
         <button type="button" onClick={runMatching} disabled={loading || (!serverMode && eligible.length === 0)}
-          className="rounded-lg bg-indigo-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50">
+          className="button button-primary disabled:cursor-not-allowed disabled:opacity-50">
           ✦ Find My AI Matches
         </button>
       </header>

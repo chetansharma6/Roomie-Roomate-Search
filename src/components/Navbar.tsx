@@ -1,4 +1,4 @@
-import { ArrowUpRight, House } from 'lucide-react';
+import { House } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useUnreadCount } from '../hooks/useMessaging';
@@ -9,7 +9,7 @@ interface NavbarProps {
 
 export function Navbar({ embedded = false }: NavbarProps) {
   const target = embedded ? '_top' : undefined;
-  const { user } = useAuth();
+  const { user, destination } = useAuth();
   const unread = useUnreadCount(Boolean(user) && !embedded);
 
   return (
@@ -30,10 +30,9 @@ export function Navbar({ embedded = false }: NavbarProps) {
                   aria-label={`${unread} unread messages`}>{unread > 99 ? '99+' : unread}</span>}
               </Link>
             )}
-            <Link className={`button button-outline nav-action${user ? ' nav-action-signed-in' : ''}`} to="/signup" target={target}>
-              <span className="nav-action-long">Create a profile</span>
-              <span className="nav-action-short">Join</span>
-              <ArrowUpRight aria-hidden="true" size={16} />
+            <Link className={`button button-outline nav-action${user ? ' nav-action-signed-in' : ''}`} to={user ? (destination === '/onboarding' ? '/onboarding' : '/profile') : '/signup'} target={target}>
+              <span className="nav-action-long">{user ? 'My profile' : 'Create a profile'}</span>
+              <span className="nav-action-short">{user ? 'Profile' : 'Join'}</span>
             </Link>
           </div>
         </nav>

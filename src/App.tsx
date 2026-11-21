@@ -72,7 +72,7 @@ export function App() {
         } />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
-      {showSiteChrome && <footer className={`site-footer ${chromeClass ?? ''}`}><div className="shell">Roomie · HackJam 2026</div></footer>}
+      {showSiteChrome && <footer className={`site-footer ${chromeClass ?? ''}`}><div className="shell"><Link className="footer-brand" to="/">Roomie.</Link><span>Better together. At home.</span><Link to="/discover?demo=1">Explore the demo</Link></div></footer>}
     </>
   );
 }
