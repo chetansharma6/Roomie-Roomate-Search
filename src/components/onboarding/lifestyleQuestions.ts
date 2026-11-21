@@ -2,8 +2,7 @@ import {
   CalendarDays, Check, ClipboardList, Clock3, House, Moon, PawPrint, Snowflake,
   Sparkles, Sun, Thermometer, UsersRound, Volume2, VolumeX, Wind,
 } from 'lucide-react'
-import type { LifestyleDetails } from '../../lib/lifestyleDetails'
-import type { Cleanliness, NoiseTolerance, PetPreference } from '../../types/profile'
+import type { LifestylePriority } from '../../lib/lifestyleDetails'
 
 export const lifestyleQuestions = [
   {
@@ -68,12 +67,10 @@ export const lifestyleQuestions = [
 ] as const
 
 export type LifestyleQuestion = (typeof lifestyleQuestions)[number]
-export type LifestyleAnswers = Partial<{
-  temperature: LifestyleDetails['temperature']
-  cleanliness: Cleanliness
-  bedtime: LifestyleDetails['bedtime']
-  guests: LifestyleDetails['guests']
-  quiet: NoiseTolerance
-  chores: LifestyleDetails['chores']
-  pets: PetPreference
-}>
+type CompleteLifestyleAnswers = {
+  [Question in LifestyleQuestion as Question['id']]: Question['options'][number]['value']
+}
+export type LifestyleAnswers = Partial<CompleteLifestyleAnswers>
+export type DemoLifestyleAnswers = CompleteLifestyleAnswers & {
+  priorities: readonly [] | readonly [LifestylePriority] | readonly [LifestylePriority, LifestylePriority]
+}

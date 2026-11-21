@@ -1,14 +1,16 @@
 import { House } from 'lucide-react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useUnreadCount } from '../hooks/useMessaging';
 
 interface NavbarProps {
   embedded?: boolean;
 }
 
 export function Navbar({ embedded = false }: NavbarProps) {
-  const { user, destination } = useAuth();
   const target = embedded ? '_top' : undefined;
+  const { user, destination } = useAuth();
+  const unread = useUnreadCount(Boolean(user) && !embedded);
 
   return (
     <>
@@ -19,15 +21,20 @@ export function Navbar({ embedded = false }: NavbarProps) {
             <span className="brand-icon"><House aria-hidden="true" size={21} strokeWidth={2.5} /></span>
             Roomie<span className="brand-dot">.</span>
           </Link>
-          <div className="nav-links">
-            <a className="nav-how" href="/#how-it-works" target={target}>How it works</a>
-            <NavLink to="/discover" target={target}>Discover</NavLink>
-            {user && <NavLink to="/account" target={target}>Account</NavLink>}
+          <a className="nav-how" href="/#how-it-works" target={target}>How it works</a>
+          <div className="nav-end">
+            {user && (
+              <Link className="nav-inbox" to="/inbox" target={target}>
+                Inbox
+                {unread > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-roomie-teal px-1.5 text-xs font-bold text-white"
+                  aria-label={`${unread} unread messages`}>{unread > 99 ? '99+' : unread}</span>}
+              </Link>
+            )}
+            <Link className={`button button-outline nav-action${user ? ' nav-action-signed-in' : ''}`} to={user ? (destination === '/onboarding' ? '/onboarding' : '/profile') : '/signup'} target={target}>
+              <span className="nav-action-long">{user ? 'My profile' : 'Create a profile'}</span>
+              <span className="nav-action-short">{user ? 'Profile' : 'Join'}</span>
+            </Link>
           </div>
-          <Link className="button button-outline nav-action" to={user ? (destination === '/onboarding' ? '/onboarding' : '/profile') : '/signup'} target={target}>
-            <span className="nav-action-long">{user ? 'My profile' : 'Create a profile'}</span>
-            <span className="nav-action-short">{user ? 'Profile' : 'Join'}</span>
-          </Link>
         </nav>
       </header>
     </>

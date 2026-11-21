@@ -18,13 +18,6 @@ const moveInFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC',
 });
 
-export const cleanlinessLabels: Record<RoommateProfile['cleanliness'], string> = {
-  relaxed: 'Relaxed about tidiness', moderate: 'Moderately tidy', tidy: 'Very tidy',
-};
-export const sleepLabels: Record<RoommateProfile['sleepSchedule'], string> = {
-  early: 'Early riser', night: 'Night owl', flexible: 'Flexible schedule',
-};
-
 export function ProfileCard({ profile, matchScore, showBio = true, badge, onViewProfile }: ProfileCardProps) {
   const [failedPhoto, setFailedPhoto] = useState<string>();
   const initials = profile.name.trim().split(/\s+/).slice(0, 2).map((word) => word[0]).join('');
