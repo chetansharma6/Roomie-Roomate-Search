@@ -1,8 +1,8 @@
-# Roomie
+# Roomie-Roomate-Search
 
 Roomie is a student-focused room and roommate discovery project. It is designed to help students find compatible housing partners by combining rental preferences, move-in timing, campus distance, and lifestyle preferences.
 
-## Project status
+## Project Status
 
 This repository currently contains the project README only. The application, dependencies, database schema, environment configuration, and test suite have not been added yet.
 
@@ -14,7 +14,7 @@ Finding off-campus housing is difficult. Finding people who fit a shared budget,
 
 Students commonly use group chats, social media, and general listing sites. Those channels split housing needs and roommate preferences across separate conversations and make it difficult to compare matches consistently.
 
-## Product goals
+## Product Goals
 
 Roomie will support two housing situations:
 
@@ -23,9 +23,9 @@ Roomie will support two housing situations:
 
 The first release should prioritize reliable discovery and filtering over features that are difficult to complete or maintain.
 
-## Planned features
+## Planned Features
 
-### Student profiles
+### Student Profiles
 
 Profiles can include:
 
@@ -68,7 +68,7 @@ compatibility score = 100 x (
 
 Each fit value should range from 0 to 1. Results should explain the factors behind a score in plain language and avoid implying that the score measures trust, safety, or roommate success.
 
-### Optional connections
+### Optional Connections
 
 The next useful connection feature is a simple interest request flow:
 
@@ -79,7 +79,7 @@ The next useful connection feature is a simple interest request flow:
 
 In-app messaging should wait until mutual interest exists.
 
-## Proposed stack
+## Proposed Stack
 
 The following stack is a proposal, not a description of the current implementation:
 
@@ -95,7 +95,7 @@ The following stack is a proposal, not a description of the current implementati
 
 Additional services should be added only when a concrete feature requires them.
 
-## Initial setup
+## Initial Setup
 
 Once the application is scaffolded, setup will use Node.js and npm.
 
@@ -114,7 +114,7 @@ npm run preview
 
 The actual scripts and dependencies should be confirmed against package.json after the application is created.
 
-## Environment variables
+## Environment Variables
 
 Supabase requires client configuration when persistence and authentication are implemented.
 
@@ -127,7 +127,7 @@ Never commit a Supabase service-role key, secret key, or real student data. Vite
 
 Keep local secrets in `.env.local`, which should be ignored by Git.
 
-## Planned project structure
+## Planned Project Structure
 
 This structure is a design target, not an existing directory layout:
 
@@ -148,9 +148,9 @@ roomie/
 
 Representative routes are `/`, `/auth`, `/onboarding`, `/discover`, and `/profile/:id`.
 
-## Planned data model
+## Planned Data Model
 
-### profiles
+### Profiles
 
 | Field | Example | Purpose |
 | --- | --- | --- |
@@ -172,7 +172,7 @@ Representative routes are `/`, `/auth`, `/onboarding`, `/discover`, and `/profil
 
 Room listings should use a separate table or clearly distinguish asking rent and actual listing distance from profile preferences.
 
-### interest_requests
+### Interest_Requests
 
 | Field | Purpose |
 | --- | --- |
@@ -184,7 +184,7 @@ Room listings should use a separate table or clearly distinguish asking rent and
 
 The database should enforce one request per sender and recipient pair, prevent self-requests, and restrict request changes to authorized users.
 
-## Responsive experience
+## Responsive Experience
 
 The application should use a responsive layout rather than separate desktop and mobile implementations.
 
@@ -201,7 +201,7 @@ Mobile expectations:
 - Compact filter access
 - Navigation that remains usable at narrow widths
 
-## Verification and safety
+## Verification and Safety
 
 Verification and moderation should be described accurately:
 
@@ -216,7 +216,7 @@ Verification and moderation should be described accurately:
 
 Roomie should not replace meeting a prospective roommate, reviewing a lease, or independently verifying a property.
 
-## Implementation plan
+## Implementation Plan
 
 The proposed delivery sequence is:
 
