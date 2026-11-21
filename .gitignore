@@ -1,7 +1,16 @@
-node_modules
-dist
-.vercel
+# Dependencies and build output
+node_modules/
+dist/
+
+# Local environment files (keep credentials out of Git)
 .env
-.env.local
-.env.*.local
-*.log
+.env.*
+!.env.example
+
+# Local tooling and operating-system files
+*.local
+.DS_Store
+coverage/
+
+# Vercel CLI
+.vercel/

@@ -9,14 +9,14 @@
 - Discovery UI (`Discover` page + `FilterPanel`, `MatchCard`, `MatchResults`, `MatchExplanation`, `MatchingLoadingState`) with a **Find My AI Matches** button.
 - Tests (Vitest, Gemini SDK mocked) and a dev-only live smoke script.
 
-The repo was empty apart from the README, so a minimal Vite + React + TS + Tailwind v4 scaffold was added. **Person 1 should replace `src/App.tsx`, `src/main.tsx`, `index.html` and `src/index.css` with the team's versions** (keep the Tailwind import).
+Merged with the team's Supabase-auth scaffold from `main`: their `index.html`, `.gitignore`, `src/styles.css` and auth UI are kept. My additions on top: Tailwind v4 (`src/index.css` imports their `styles.css` into the `base` layer so Tailwind utilities win), `tsconfig.server.json` (for `api/`, `tests/`, `scripts/`), a `Discover` entry in `src/App.tsx`, and the Vite config's Tailwind + local `/api` plugins.
 
 ## Files
 
-Created: `package.json`, `tsconfig.json`, `vite.config.ts`, `vercel.json`, `index.html`, `.gitignore`, `.env.example`, `PERSON3_SETUP.md`
-`src/`: `main.tsx`, `App.tsx`, `index.css`, `types/profile.ts`, `data/demoProfiles.ts`, `lib/{filters,scoring,matchSchema,matchClient,profileRepository,profileMapper}.ts`, `pages/Discover.tsx`, `components/discover/*`
+Created: `vercel.json`, `tsconfig.server.json`, `PERSON3_SETUP.md`. Merged with team files: `package.json`, `tsconfig.json`, `vite.config.ts`, `.env.example`, `.gitignore`, `src/App.tsx`, `src/main.tsx`
+`src/`: `index.css`, `types/profile.ts`, `data/demoProfiles.ts`, `lib/{filters,scoring,matchSchema,matchClient,profileRepository,profileMapper}.ts`, `pages/Discover.tsx`, `components/discover/*`
 `api/`: `match.ts`, `_lib/{matchService,gemini,prompt,supabase}.ts`
-`tests/`, `scripts/smoke-gemini.ts`. No pre-existing files were modified.
+`tests/`, `scripts/smoke-gemini.ts`.
 
 ## Dependencies
 
@@ -31,7 +31,7 @@ See `.env.example`. Put real values in `.env.local` (git-ignored).
 | `GEMINI_API_KEY` | server only | Never use a `VITE_` prefix |
 | `GEMINI_MODEL` | server | Default `gemini-3.8-flash` (the model used in the current `@google/genai` docs) |
 | `ROOMIE_DEMO_MODE` | server | `true` enables the fictional unauthenticated student. **Ignored when `VERCEL_ENV=production`** (or `NODE_ENV=production` off Vercel) |
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | server | Real auth + profile loading when demo mode is off |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` | server (the `VITE_` ones are shared with the browser client) | Real auth + profile loading when demo mode is off. Names match the team's `.env.example` |
 
 ## Local development
 
@@ -54,7 +54,7 @@ Create one in [Google AI Studio](https://aistudio.google.com/apikey), put it in 
 ## Person 2 — connecting Supabase
 
 1. Create a `profiles` table with `snake_case` columns; `src/lib/profileMapper.ts` (`rowToProfile`) documents the exact mapping (`university_id`, `display_name`, `budget_min`, `budget_max`, `distance_from_campus_miles`, `move_in_date`, `roommates_wanted`, `housing_status` (`has_room`/`need_room` accepted), `monthly_rent`, `cleanliness`, `verified_university_email`, …). Rows missing required fields are skipped. Email is never read.
-2. Set the three `SUPABASE_*` variables and turn off `ROOMIE_DEMO_MODE`. `/api/match` then verifies the caller's bearer token with Supabase Auth and loads profiles via `api/_lib/supabase.ts`. The requester id always comes from the token, never the request body.
+2. Set the Supabase variables above and turn off `ROOMIE_DEMO_MODE`. `/api/match` then verifies the caller's bearer token with Supabase Auth and loads profiles via `api/_lib/supabase.ts`. The requester id always comes from the token, never the request body.
 3. On the client pass `currentUser`, `profiles` and `accessToken={session.access_token}` to `<Discover />`.
 4. Caveat: the Supabase code path follows the documented REST APIs but has **not been run against a live project**.
 

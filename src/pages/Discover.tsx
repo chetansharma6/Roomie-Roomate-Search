@@ -89,17 +89,17 @@ export default function Discover({
 
   if (!currentUser) {
     return (
-      <main className="mx-auto max-w-3xl p-6">
+      <div className="mx-auto max-w-3xl p-6">
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-6">
           <h1 className="text-lg font-semibold">Create your profile first</h1>
           <p className="mt-1 text-sm text-slate-700">Roomie needs your housing needs and lifestyle preferences before it can find compatible roommates.</p>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Discover roommates</h1>
@@ -161,6 +161,6 @@ export default function Discover({
           onClose={() => setOpenId(null)}
         />
       )}
-    </main>
+    </div>
   );
 }

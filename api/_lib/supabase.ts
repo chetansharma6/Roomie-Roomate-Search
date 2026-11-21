@@ -6,14 +6,16 @@
 import { rowToProfile } from '../../src/lib/profileMapper.js';
 import type { ProfileRepository } from '../../src/lib/profileRepository.js';
 
+/** Variable names follow the team's .env.example. */
 export interface SupabaseEnv {
-  SUPABASE_URL?: string;
-  SUPABASE_ANON_KEY?: string;
-  SUPABASE_SERVICE_ROLE_KEY?: string;
+  VITE_SUPABASE_URL?: string;
+  VITE_SUPABASE_PUBLISHABLE_KEY?: string;
+  /** Server-only secret key; never prefix with VITE_. */
+  SUPABASE_SECRET_KEY?: string;
 }
 
 export function isSupabaseConfigured(env: SupabaseEnv): boolean {
-  return Boolean(env.SUPABASE_URL && env.SUPABASE_ANON_KEY && env.SUPABASE_SERVICE_ROLE_KEY);
+  return Boolean(env.VITE_SUPABASE_URL && env.VITE_SUPABASE_PUBLISHABLE_KEY && env.SUPABASE_SECRET_KEY);
 }
 
 /** Verifies a user's access token with Supabase Auth and returns their user id. */
@@ -23,8 +25,8 @@ export async function verifyAccessToken(
   fetchImpl: typeof fetch = fetch,
 ): Promise<string | null> {
   try {
-    const res = await fetchImpl(`${env.SUPABASE_URL}/auth/v1/user`, {
-      headers: { apikey: env.SUPABASE_ANON_KEY ?? '', Authorization: `Bearer ${token}` },
+    const res = await fetchImpl(`${env.VITE_SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '', Authorization: `Bearer ${token}` },
     });
     if (!res.ok) return null;
     const user = (await res.json()) as { id?: unknown };
@@ -36,11 +38,11 @@ export async function verifyAccessToken(
 
 export function createSupabaseRepository(env: SupabaseEnv, fetchImpl: typeof fetch = fetch): ProfileRepository {
   const headers = {
-    apikey: env.SUPABASE_SERVICE_ROLE_KEY ?? '',
-    Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY ?? ''}`,
+    apikey: env.SUPABASE_SECRET_KEY ?? '',
+    Authorization: `Bearer ${env.SUPABASE_SECRET_KEY ?? ''}`,
   };
   async function query(qs: string): Promise<Record<string, unknown>[]> {
-    const res = await fetchImpl(`${env.SUPABASE_URL}/rest/v1/profiles?${qs}`, { headers });
+    const res = await fetchImpl(`${env.VITE_SUPABASE_URL}/rest/v1/profiles?${qs}`, { headers });
     if (!res.ok) throw new Error(`profiles query failed (${res.status})`);
     return (await res.json()) as Record<string, unknown>[];
   }

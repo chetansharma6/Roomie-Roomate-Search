@@ -18,7 +18,8 @@ export const geminiResponseSchema = z.object({
 
 /** JSON Schema sent to Gemini for structured output (generated from the same Zod schema). */
 export function geminiJsonSchema(): Record<string, unknown> {
-  const { $schema: _ignored, ...schema } = z.toJSONSchema(geminiResponseSchema) as Record<string, unknown>;
+  const schema = z.toJSONSchema(geminiResponseSchema) as Record<string, unknown>;
+  delete schema.$schema;
   return schema;
 }
 

@@ -29,7 +29,7 @@ describe('demo mode gating', () => {
     expect(out.status).toBe(503);
     const out2 = await runMatch({
       method: 'POST', body: { demoStudentId: DEMO_STUDENT_ID },
-      env: { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_ANON_KEY: 'a', SUPABASE_SERVICE_ROLE_KEY: 's', VERCEL_ENV: 'production', ROOMIE_DEMO_MODE: 'true' },
+      env: { VITE_SUPABASE_URL: 'https://x.supabase.co', VITE_SUPABASE_PUBLISHABLE_KEY: 'a', SUPABASE_SECRET_KEY: 's', VERCEL_ENV: 'production', ROOMIE_DEMO_MODE: 'true' },
     });
     expect(out2.status).toBe(401);
   });
@@ -38,7 +38,7 @@ describe('demo mode gating', () => {
     const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 401 });
     const out = await runMatch({
       method: 'POST', body: {}, authorization: 'Bearer bad',
-      env: { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_ANON_KEY: 'a', SUPABASE_SERVICE_ROLE_KEY: 's' },
+      env: { VITE_SUPABASE_URL: 'https://x.supabase.co', VITE_SUPABASE_PUBLISHABLE_KEY: 'a', SUPABASE_SECRET_KEY: 's' },
       deps: { fetchImpl: fetchImpl as unknown as typeof fetch },
     });
     expect(out.status).toBe(401);

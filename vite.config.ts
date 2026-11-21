@@ -1,4 +1,5 @@
-import { defineConfig, loadEnv, type Plugin } from 'vite';
+import { loadEnv, type Plugin } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import type { IncomingMessage, ServerResponse } from 'node:http';
