@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { GeminiFailure, analyzeWithGemini, sdkGenerate, type GenerateFn } from '../api/_lib/gemini.js';
+import { DEFAULT_GEMINI_MODEL, GeminiFailure, analyzeWithGemini, sdkGenerate, type GenerateFn } from '../api/_lib/gemini.js';
 import { ROOMIE_SYSTEM_INSTRUCTION, buildUserPrompt, sanitizeText, toPromptProfile } from '../api/_lib/prompt.js';
 import { geminiJsonSchema, validateGeminiMatches } from '../src/lib/matchSchema.js';
 import { makeProfile } from './helpers.js';
@@ -112,6 +112,14 @@ describe('prompt construction and injection resistance', () => {
   it('does not send names, majors, academic year or verification', () => {
     const p = JSON.stringify(toPromptProfile(makeProfile({ displayName: 'Secret Name', major: 'Physics', academicYear: 'senior' })));
     for (const leaked of ['Secret Name', 'Physics', 'senior', 'verification']) expect(p).not.toContain(leaked);
+  });
+  it('does not send housing logistics (budget, rent, distance, move-in date); deterministic rules own those', () => {
+    const p = JSON.stringify(toPromptProfile(makeProfile({ monthlyRent: 777, budgetMin: 611, budgetMax: 933 })));
+    for (const leaked of ['budget', 'Budget', 'monthlyRent', 'distance', 'moveIn', '777', '611', '933']) expect(p).not.toContain(leaked);
+    expect(ROOMIE_SYSTEM_INSTRUCTION).toMatch(/LIFESTYLE compatibility score only/);
+  });
+  it('uses gemini-3.5-flash-lite as the default model', () => {
+    expect(DEFAULT_GEMINI_MODEL).toBe('gemini-3.5-flash-lite');
   });
   it('sanitizes control characters and length', () => {
     expect(sanitizeText('a\u0000b\n\nc', 10)).toBe('a b c');

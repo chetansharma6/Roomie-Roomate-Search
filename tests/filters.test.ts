@@ -90,3 +90,13 @@ describe('demo data', () => {
     for (const excluded of ['demo-cole', 'demo-priya', 'demo-grace', 'demo-you']) expect(result).not.toContain(excluded);
   });
 });
+
+describe('demo data hygiene', () => {
+  it('keeps the prompt-injection test profile out of the normal demo list', async () => {
+    const { ADVERSARIAL_TEST_PROFILES } = await import('../src/data/demoProfiles.js');
+    const demoIds = DEMO_PROFILES.map((p) => p.id);
+    for (const p of ADVERSARIAL_TEST_PROFILES) expect(demoIds).not.toContain(p.id);
+    expect(demoIds).toContain('demo-maya');
+    expect(demoIds).toContain('demo-tyler');
+  });
+});

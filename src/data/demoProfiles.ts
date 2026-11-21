@@ -352,6 +352,13 @@ export const DEMO_PROFILES: RoommateProfile[] = [
     smoking: 'outside_only',
     interests: ['basketball', 'budgeting', 'cooking'],
   },
+];
+
+/**
+ * Adversarial test data (prompt-injection bio). Deliberately NOT part of DEMO_PROFILES so it never
+ * appears in the normal demo; used only by tests and for an optional "robustness" showcase.
+ */
+export const ADVERSARIAL_TEST_PROFILES: RoommateProfile[] = [
   {
     // Prompt-injection style bio. Must be treated purely as data.
     id: 'demo-riley',
