@@ -181,7 +181,7 @@ export async function runMatch({ method, body, authorization, clientKey, env, de
     return { status: 200, json: response };
   } catch (e) {
     const reason: FallbackReason = e instanceof GeminiFailure ? e.kind : 'ai_error';
-    console.warn(`[match] Gemini unavailable, using fallback (${reason})`);
+    console.warn(`[match] Gemini unavailable, using fallback (reason=${reason}${e instanceof GeminiFailure && e.status ? `, status=${e.status}` : ''})`);
     return { status: 200, json: fallbackResponse(requester, eligible, reason) };
   }
 }

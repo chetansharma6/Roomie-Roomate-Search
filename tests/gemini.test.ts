@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { DEFAULT_GEMINI_MODEL, GeminiFailure, analyzeWithGemini, sdkGenerate, type GenerateFn } from '../api/_lib/gemini.js';
+import { DEFAULT_GEMINI_MODEL, GeminiFailure, MAX_GEMINI_RETRIES, analyzeWithGemini, sdkGenerate, type GenerateFn } from '../api/_lib/gemini.js';
 import { ROOMIE_SYSTEM_INSTRUCTION, buildUserPrompt, sanitizeText, toPromptProfile } from '../api/_lib/prompt.js';
 import { geminiJsonSchema, validateGeminiMatches } from '../src/lib/matchSchema.js';
 import { makeProfile } from './helpers.js';
@@ -83,6 +83,45 @@ describe('analyzeWithGemini', () => {
     expect(e).toBeInstanceOf(GeminiFailure);
     expect(e.kind).toBe('ai_error');
     expect(e.message).not.toContain('AIza');
+  });
+});
+
+describe('analyzeWithGemini transient retries', () => {
+  const opts = { apiKey: 'test-key', retryBaseDelayMs: 1 };
+  const overloaded = () => Object.assign(new Error('{"error":{"code":503,"status":"UNAVAILABLE"}} AIza-secret'), { status: 503 });
+
+  it('retries a 503 and succeeds without falling back', async () => {
+    const generate = vi.fn<GenerateFn>().mockRejectedValueOnce(overloaded()).mockResolvedValue(json(item('a')));
+    const out = await analyzeWithGemini(me, candidates, { ...opts, generate });
+    expect(out[0]!.profileId).toBe('a');
+    expect(generate).toHaveBeenCalledTimes(2);
+  });
+  it('retries a 429 too', async () => {
+    const rl = Object.assign(new Error('quota'), { status: 429 });
+    const generate = vi.fn<GenerateFn>().mockRejectedValueOnce(rl).mockResolvedValue(json(item('a')));
+    await analyzeWithGemini(me, candidates, { ...opts, generate });
+    expect(generate).toHaveBeenCalledTimes(2);
+  });
+  it('gives up after a bounded number of retries and reports unavailable with its status', async () => {
+    const generate = vi.fn<GenerateFn>().mockRejectedValue(overloaded());
+    const e = await analyzeWithGemini(me, candidates, { ...opts, generate }).catch((x) => x);
+    expect(e).toMatchObject({ kind: 'unavailable', status: 503 });
+    expect(e.message).not.toContain('AIza');
+    expect(generate).toHaveBeenCalledTimes(1 + MAX_GEMINI_RETRIES);
+  });
+  it.each([400, 401, 403, 404])('never retries a %i', async (status) => {
+    const generate = vi.fn<GenerateFn>().mockRejectedValue(Object.assign(new Error('nope'), { status }));
+    await expect(analyzeWithGemini(me, candidates, { ...opts, generate })).rejects.toMatchObject({ kind: 'ai_error', status });
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
+  it('does not retry invalid structured output', async () => {
+    const generate = vi.fn<GenerateFn>().mockResolvedValue(json(item('ghost')));
+    await expect(analyzeWithGemini(me, candidates, { ...opts, generate })).rejects.toMatchObject({ kind: 'invalid_ai_response' });
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
+  it('stops retrying when the overall time budget is spent', async () => {
+    const generate = vi.fn<GenerateFn>().mockRejectedValue(overloaded());
+    await expect(analyzeWithGemini(me, candidates, { apiKey: 'k', retryBaseDelayMs: 10_000, timeoutMs: 30, generate })).rejects.toMatchObject({ kind: 'timeout' });
   });
 });
 
