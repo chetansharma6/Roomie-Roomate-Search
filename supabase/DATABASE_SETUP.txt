@@ -2,8 +2,10 @@ Roomie database setup — applied to hosted Supabase on 2026-11-21
 
 CONFIRMED HOSTED STATE
 
-All four migrations are applied in timestamp order to project xcelqqmncgeveawkumje,
-including 20261121220000_profile_photos.sql. The anon-key read selecting profiles.photo_url
+All five migrations are applied in timestamp order to project xcelqqmncgeveawkumje,
+including 20261121220000_profile_photos.sql and 20261121230000_profile_lifestyle_details.sql.
+The lifestyle_details column and its validation constraint exist; authenticated insert/update
+grants are present, and anon insert/update grants are absent. The anon-key read selecting profiles.photo_url
 returns 42501 (RLS) rather than 42703 (missing column). Authenticated insert/update grants
 for photo_url are present; anon column grants are absent. RLS is enabled on all four application
 tables, including the legacy domain table. The hosted transactional policy

@@ -37,7 +37,7 @@ The browser never needs a database secret/service-role key. Supabase supplies it
 
 ## Hosted checks still needed
 
-- Remote history was checked before mutation: migrations 1–3 were applied and only `20261121220000_profile_photos.sql` was pending. After authorization, `npm run supabase:db:push -- --yes` applied that migration; a follow-up list showed all four applied in order.
+- Remote history was checked before mutation. Migrations 1–4 were applied and `20261121230000_profile_lifestyle_details.sql` alone was pending. After authorization, the hosted push applied only that migration; a follow-up list showed all five applied in order. Read-only checks confirmed the new column, validation constraint, authenticated insert/update grants, and absence of anon write grants.
 - A read-only anon-key query selecting `photo_url` returned `42501` (expected RLS denial), not `42703`. Catalog privilege checks confirmed authenticated insert/update grants for `photo_url` and no anon insert/update grants.
 - Auth redirects and custom SMTP are hosted Auth settings and remain unverified. The exact Codespaces URL is `https://fuzzy-eureka-wv7gjp5x77pph9prp-5173.app.github.dev/signup`; also allow `http://localhost:5173/signup` and the deployed Vercel `/signup` callback. Email confirmation is enabled. SMTP status still needs checking.
 - A count-only hosted query returned **1 active verified USF profile**. It does not establish that there is another distinct candidate available.
