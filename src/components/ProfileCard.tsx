@@ -31,7 +31,7 @@ export function ProfileCard({ profile, matchScore, showBio = true, badge, onView
   const hasRoom = profile.housingStatus === 'have_room';
   const demoPhoto = profile.photoUrl?.match(/^(\/demo-portraits\/sheet-\d+\.png)#tile=(\d),(\d)$/);
   const spritePosition = demoPhoto
-    ? `${Number(demoPhoto[2]) * (100 / 3)}% ${Number(demoPhoto[3]) * (100 / 3)}%`
+    ? `${Number(demoPhoto[2]) * (100 / 3)}% ${Number(demoPhoto[3]) * (100 / (4 - (1 / 1.85)))}%`
     : undefined;
 
   return (
