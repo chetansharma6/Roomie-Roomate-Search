@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { DataAccessError } from '../lib/dataAccess'
 import { parseProfilePhotoUrl, rowToProfile } from '../lib/profileMapper'
 import { getMyProfile, listProfiles, upsertMyProfile } from '../lib/profiles'
 import { StudentDeck } from '../components/discover/StudentDeck'
@@ -97,8 +98,8 @@ export function Onboarding() {
     try {
       await upsertMyProfile(profile)
       await refresh()
-    } catch {
-      setError('Could not save your profile. Please check your entries and try again.')
+    } catch (cause) {
+      setError(cause instanceof DataAccessError ? cause.message : 'Could not save your profile. Please check your entries and try again.')
     } finally {
       setSaving(false)
     }
@@ -184,6 +185,6 @@ export function StudentDiscover() {
   const profiles = currentResult?.profiles
   if (!profiles) return <main className="shell route-notice" role="status">Loading student profiles…</main>
   const current = currentResult.profile
-  if (!current || !session) return <main className="shell route-notice"><h1>Complete your profile</h1><p>An active profile with a move-in date is needed for discovery.</p><Link to="/account">Account</Link></main>
-  return <StudentDeck key={current.id} currentUser={current} profiles={profiles} accessToken={session.access_token} />
+  if (!current || !session) return <main className="shell route-notice"><h1>Complete your profile</h1><p>An active profile with a move-in date is needed for discovery.</p><Link to="/profile">Edit profile</Link></main>
+  return <><div className="shell"><Link to="/profile">Edit profile</Link> · <Link to="/account">Account and sign out</Link></div><StudentDeck key={current.id} currentUser={current} profiles={profiles} accessToken={session.access_token} /></>
 }

@@ -93,6 +93,8 @@ export default function SignIn({ redirectAfterSignIn = true }: { redirectAfterSi
               </button>
             </div>
 
+            {destination === '/discover' && <p><Link to="/profile">Edit your saved roommate profile</Link></p>}
+
             <form className="insights-form" onSubmit={requestInsights}>
               <div>
                 <span className="eyebrow">AI roommate insights</span>
