@@ -8,6 +8,7 @@ import { useAuth } from './hooks/useAuth';
 import { StudentDiscover } from './pages/AuthenticatedRoutes';
 import { Onboarding } from './pages/Onboarding';
 import { ProfileEditor } from './pages/ProfileEditor';
+import { MessagesPage } from './pages/MessagesPage';
 
 const SignIn = lazy(() => import('./pages/SignIn'));
 function Signup({ redirectAfterSignIn = true }: { redirectAfterSignIn?: boolean }) {
@@ -62,6 +63,8 @@ export function App() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/profile" element={<ProfileEditor />} />
         <Route path="/account" element={<Signup redirectAfterSignIn={false} />} />
+        <Route path="/inbox" element={<MessagesPage />} />
+        <Route path="/messages/:conversationId" element={<MessagesPage />} />
         <Route path="/matches" element={
           <main className="min-h-screen bg-slate-50 text-slate-900" id="main-content">
             <Discover />

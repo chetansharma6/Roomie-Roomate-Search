@@ -38,8 +38,10 @@ button { cursor: pointer; }
 .brand-icon { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; color: white; background: var(--color-roomie-teal); border-radius: .65rem; margin-right: .55rem; }
 .brand-dot { color: var(--color-roomie-teal); }
 .nav-how { justify-self: center; font-size: .875rem; font-weight: 650; white-space: nowrap; }
-.nav-how:hover, .text-link:hover { text-decoration: underline; text-underline-offset: 4px; }
-.nav-action { justify-self: end; white-space: nowrap; }
+.nav-how:hover, .nav-inbox:hover, .text-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.nav-end { justify-self: end; display: flex; align-items: center; gap: .75rem; }
+.nav-inbox { display: inline-flex; min-height: 2.75rem; align-items: center; gap: .375rem; font-size: .875rem; font-weight: 650; }
+.nav-action { white-space: nowrap; }
 .nav-action-short { display: none; }
 
 .button {
@@ -302,6 +304,7 @@ button { cursor: pointer; }
   .nav-action-short { display: inline; }
   .navbar .nav-action { padding-inline: .55rem; }
   .nav-action > svg { display: none; }
+  .nav-action-signed-in { display: none; }
   .hero { grid-template-columns: 1fr; }
   .hero h1 { font-size: clamp(2.55rem, 8.8vw, 4.5rem); }
   .hero-visual img { aspect-ratio: 1.55; }
