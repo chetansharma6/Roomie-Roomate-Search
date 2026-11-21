@@ -1,0 +1,68 @@
+import { ArrowRight, BadgeCheck, CalendarDays, MapPin, Users, Wallet } from 'lucide-react';
+import type { RoommateProfile } from '../types/RoommateProfile';
+
+interface ProfileCardProps {
+  profile: RoommateProfile;
+  matchScore?: number;
+  onViewProfile?: (profile: RoommateProfile) => void;
+}
+
+const dollars = new Intl.NumberFormat('en-US', {
+  style: 'currency', currency: 'USD', maximumFractionDigits: 0,
+});
+const moveInFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC',
+});
+
+export const cleanlinessLabels: Record<RoommateProfile['cleanliness'], string> = {
+  relaxed: 'Relaxed about tidiness', moderate: 'Moderately tidy', tidy: 'Very tidy',
+};
+export const sleepLabels: Record<RoommateProfile['sleepSchedule'], string> = {
+  early: 'Early riser', night: 'Night owl', flexible: 'Flexible schedule',
+};
+
+export function ProfileCard({ profile, matchScore, onViewProfile }: ProfileCardProps) {
+  const initials = profile.name.trim().split(/\s+/).slice(0, 2).map((word) => word[0]).join('');
+  const moveIn = new Date(profile.moveInDate);
+  const moveInLabel = Number.isNaN(moveIn.getTime()) ? 'Flexible' : moveInFormatter.format(moveIn);
+  const hasRoom = profile.housingStatus === 'have_room';
+  const monthlyRent = profile.budgetMin === profile.budgetMax
+    ? dollars.format(profile.budgetMax)
+    : `${dollars.format(profile.budgetMin)}–${dollars.format(profile.budgetMax)}`;
+
+  return (
+    <article className="profile-card">
+      <header className="profile-header">
+        <span className={`avatar ${hasRoom ? 'avatar-peach' : ''}`} aria-hidden="true">{initials}</span>
+        <div>
+          <h2 className="profile-name">{profile.name}</h2>
+          <p className="profile-subtitle">{profile.major} · {profile.university}</p>
+        </div>
+      </header>
+      <div className="profile-badges">
+        <span className={`chip ${hasRoom ? 'chip-peach' : 'chip-green'}`}>
+          {hasRoom ? 'Has a room' : 'Looking for a place'}
+        </span>
+        {profile.verified && (
+          <span className="chip chip-outline"><BadgeCheck aria-hidden="true" size={15} /> University email verified</span>
+        )}
+        {typeof matchScore === 'number' && Number.isFinite(matchScore) && matchScore >= 0 && matchScore <= 100 && (
+          <span className="chip chip-green">{Math.round(matchScore)}% match</span>
+        )}
+      </div>
+      <p className="profile-bio">{profile.bio}</p>
+      <dl className="profile-facts">
+        <div><dt><Wallet aria-hidden="true" /> {hasRoom ? 'Monthly rent' : 'Monthly budget'}</dt><dd>{monthlyRent}</dd></div>
+        <div><dt><MapPin aria-hidden="true" /> Campus distance</dt><dd>{profile.distanceMiles} mi</dd></div>
+        <div><dt><CalendarDays aria-hidden="true" /> Move-in</dt><dd>{moveInLabel}</dd></div>
+        <div><dt><Users aria-hidden="true" /> Roommates wanted</dt><dd>{profile.roommatesWanted}</dd></div>
+      </dl>
+      {onViewProfile && (
+        <button className="button button-outline profile-action" type="button" onClick={() => onViewProfile(profile)}>
+          View profile <ArrowRight size={16} aria-hidden="true" />
+          <span className="sr-only"> for {profile.name}</span>
+        </button>
+      )}
+    </article>
+  );
+}

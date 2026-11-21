@@ -1,185 +1,68 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import type { Session } from '@supabase/supabase-js'
-import { supabase } from './lib/supabase'
-import Discover from './pages/Discover'
+import { lazy, Suspense } from 'react';
+import { Link, Route, Routes, useSearchParams } from 'react-router-dom';
+import { Navbar } from './components/Navbar';
+import { DemoDiscover } from './demo/DemoDiscover';
+import { Landing } from './pages/Landing';
+import Discover from './pages/Discover';
 
-interface RoommateInsightsResponse {
-  insight: string
+const SignIn = lazy(() => import('./pages/SignIn'));
+const hasSupabase = Boolean(
+  import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+);
+
+function Signup() {
+  return hasSupabase ? (
+    <Suspense fallback={<main className="shell route-notice" id="main-content" role="status">Loading sign-in…</main>}>
+      <SignIn />
+    </Suspense>
+  ) : <SignupPlaceholder />;
 }
 
-export default function App() {
-  const [session, setSession] = useState<Session | null>(null)
-  const [email, setEmail] = useState('')
-  const [message, setMessage] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [showDiscover, setShowDiscover] = useState(false)
-  const [profile, setProfile] = useState('')
-  const [insight, setInsight] = useState('')
-  const [insightLoading, setInsightLoading] = useState(false)
-
-  useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setLoading(false)
-    })
-
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession)
-      setLoading(false)
-    })
-
-    return () => data.subscription.unsubscribe()
-  }, [])
-
-  async function sendMagicLink(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setMessage('')
-    setLoading(true)
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin },
-    })
-
-    setMessage(error ? error.message : 'Check your email for the secure sign-in link.')
-    setLoading(false)
-  }
-
-  async function signOut() {
-    setLoading(true)
-    const { error } = await supabase.auth.signOut()
-    setInsight('')
-    setProfile('')
-    setMessage(error?.message ?? '')
-    setLoading(false)
-  }
-
-  async function requestInsights(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setMessage('')
-    setInsight('')
-    setInsightLoading(true)
-
-    const { data, error } = await supabase.functions.invoke<RoommateInsightsResponse>(
-      'roommate-insights',
-      { body: { profile } },
-    )
-
-    if (error || !data?.insight) {
-      setMessage('Roommate insights are unavailable right now. Please try again.')
-    } else {
-      setInsight(data.insight)
-    }
-
-    setInsightLoading(false)
-  }
-
-  if (showDiscover) {
-    return (
-      <div className="min-h-screen bg-slate-50 text-slate-900">
-        <div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6">
-          <button type="button" onClick={() => setShowDiscover(false)}>
-            ← Back
-          </button>
-        </div>
-        {/* TODO(Person 2): load the signed-in student's profile + candidate profiles from Supabase and
-            pass them as currentUser / profiles. Until then a signed-in user sees "create your profile";
-            signed-out visitors get the fictional demo (requires ROOMIE_DEMO_MODE on the server). */}
-        {session ? (
-          <Discover currentUser={null} accessToken={session.access_token} />
-        ) : (
-          <Discover />
-        )}
-      </div>
-    )
-  }
+function SignupPlaceholder() {
+  const [params] = useSearchParams();
+  const housing = params.get('housing');
+  const titles = {
+    need_room: 'Looking for a place?',
+    have_room: 'Have a room to fill?',
+  };
 
   return (
-    <main>
-      <section className="card" aria-labelledby="page-title">
-        <span className="eyebrow">Student housing, made simpler</span>
-        <h1 id="page-title">Roomie</h1>
-        <p className="intro">
-          Find compatible people to share a place with, using the details that
-          matter: budget, timing, location, and daily routines.
-        </p>
-
-        {loading && !session ? (
-          <p role="status">Connecting securely…</p>
-        ) : session ? (
-          <div className="member-area">
-            <div className="session-bar">
-              <p>
-                Signed in as <strong>{session.user.email}</strong>
-              </p>
-              <button className="secondary" type="button" onClick={signOut} disabled={loading}>
-                Sign out
-              </button>
-            </div>
-
-            <form className="insights-form" onSubmit={requestInsights}>
-              <div>
-                <span className="eyebrow">AI roommate insights</span>
-                <h2>Turn your preferences into better questions</h2>
-                <p className="helper-text">
-                  Describe your budget, schedule, location, and everyday living
-                  preferences. Don’t include names, contact details, or exact addresses.
-                </p>
-              </div>
-              <label htmlFor="profile">Your roommate preferences</label>
-              <textarea
-                id="profile"
-                name="profile"
-                minLength={20}
-                maxLength={4000}
-                placeholder="I’m looking for a place near campus under $900. I study late, prefer a quiet home, and am comfortable with cats…"
-                value={profile}
-                onChange={(event) => setProfile(event.target.value)}
-                required
-              />
-              <div className="form-footer">
-                <span>{profile.length}/4000</span>
-                <button type="submit" disabled={insightLoading}>
-                  {insightLoading ? 'Generating…' : 'Get insights'}
-                </button>
-              </div>
-            </form>
-
-            {insight && (
-              <section className="insight" aria-labelledby="insight-title">
-                <h2 id="insight-title">Your conversation starter</h2>
-                <p>{insight}</p>
-                <small>AI-generated suggestions can be incomplete. Verify important housing details yourself.</small>
-              </section>
-            )}
-          </div>
-        ) : (
-          <form className="auth-panel" onSubmit={sendMagicLink}>
-            <label htmlFor="email">University email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@university.edu"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            />
-            <button type="submit" disabled={loading}>
-              {loading ? 'Sending…' : 'Email me a sign-in link'}
-            </button>
-          </form>
-        )}
-
-        <p>
-          <button type="button" onClick={() => setShowDiscover(true)}>
-            {session ? 'Find roommates' : 'Explore demo matches (fictional data)'}
-          </button>
-        </p>
-
-        {message && <p role="alert" className="message">{message}</p>}
-      </section>
+    <main className="shell route-notice" id="main-content">
+      <h1>{housing === 'need_room' || housing === 'have_room' ? titles[housing] : 'Create a profile'}</h1>
+      <p>University email sign-up is coming soon. You can explore the example roommate profiles in the meantime.</p>
+      <Link className="button button-primary" to="/discover">Explore demo profiles</Link>
     </main>
-  )
+  );
+}
+
+function PageNotFound() {
+  return (
+    <main className="shell route-notice" id="main-content">
+      <h1>Page not found</h1>
+      <Link className="button button-primary" to="/">Back to Roomie</Link>
+    </main>
+  );
+}
+
+export function App() {
+  const [params] = useSearchParams();
+  const embedded = params.get('preview') === '1' && window.self !== window.top;
+
+  return (
+    <>
+      <Navbar embedded={embedded} />
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/discover" element={<DemoDiscover embedded={embedded} />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/matches" element={
+          <main className="min-h-screen bg-slate-50 text-slate-900" id="main-content">
+            <Discover />
+          </main>
+        } />
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+      {!embedded && <footer className="site-footer"><div className="shell">Roomie · HackJam 2026</div></footer>}
+    </>
+  );
 }
