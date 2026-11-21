@@ -4,9 +4,7 @@ Roomie is a student-focused room and roommate discovery project. It is designed 
 
 ## Project Status
 
-This repository currently contains the project README only. The application, dependencies, database schema, environment configuration, and test suite have not been added yet.
-
-The documentation below describes the planned product and implementation. Features should not be presented as complete until they exist in the codebase.
+The repository now contains an initial React, TypeScript, and Vite application with a Supabase browser client and passwordless email authentication. Profile persistence, discovery, matching, database migrations, and automated tests are still planned and should not be presented as complete.
 
 ## Problem
 
@@ -79,11 +77,11 @@ The next useful connection feature is a simple interest request flow:
 
 In-app messaging should wait until mutual interest exists.
 
-## Proposed Stack
+## Stack
 
-The following stack is a proposal, not a description of the current implementation:
+React, TypeScript, Vite, and Supabase Auth are implemented. The remaining entries describe the planned direction:
 
-| Layer | Proposed technology |
+| Layer | Technology |
 | --- | --- |
 | Frontend | React, TypeScript, Vite |
 | Styling | Tailwind CSS |
@@ -97,22 +95,22 @@ Additional services should be added only when a concrete feature requires them.
 
 ## Initial Setup
 
-Once the application is scaffolded, setup will use Node.js and npm.
+Install dependencies, copy the environment template, and add the Supabase project values:
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-Typical Vite scripts are:
+Available scripts are:
 
 ```bash
 npm run dev
 npm run build
+npm run lint
 npm run preview
 ```
-
-The actual scripts and dependencies should be confirmed against package.json after the application is created.
 
 ## Environment Variables
 
@@ -125,28 +123,26 @@ VITE_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 
 Never commit a Supabase service-role key, secret key, or real student data. Vite variables prefixed with `VITE_` are exposed to browser code.
 
-Keep local secrets in `.env.local`, which should be ignored by Git.
+Keep local values in `.env.local`, which is ignored by Git. Only the project URL and publishable key belong in `VITE_` variables. Server-only secrets must never use that prefix or be imported by code under `src/`.
 
-## Planned Project Structure
+## Project Structure
 
-This structure is a design target, not an existing directory layout:
+The current foundation is:
 
 ```text
 roomie/
-  public/
   src/
-    components/
-    pages/
     lib/
-    data/
-    types/
+      supabase.ts
     App.tsx
     main.tsx
+    styles.css
+  .env.example
   package.json
   README.md
 ```
 
-Representative routes are `/`, `/auth`, `/onboarding`, `/discover`, and `/profile/:id`.
+The current single page provides passwordless email sign-in and sign-out. Representative future routes are `/auth`, `/onboarding`, `/discover`, and `/profile/:id`.
 
 ## Planned Data Model
 
@@ -220,11 +216,11 @@ Roomie should not replace meeting a prospective roommate, reviewing a lease, or 
 
 The proposed delivery sequence is:
 
-1. Scaffold the React and TypeScript application.
+1. Scaffold the React and TypeScript application. (Complete)
 2. Define the shared profile and listing types.
 3. Add a landing page and responsive navigation.
 4. Add profile creation and editing.
-5. Add Supabase authentication and database access.
+5. Add Supabase authentication and database access. (Authentication connected; database access pending)
 6. Add fictional demo profiles and discovery filters.
 7. Add explainable compatibility ranking.
 8. Add an interest request flow if persistence and authorization are stable.
