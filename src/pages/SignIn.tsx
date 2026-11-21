@@ -29,7 +29,7 @@ export default function SignIn({ redirectAfterSignIn = true }: { redirectAfterSi
     <main id="main-content" className="sign-in">
       <section className="card" aria-labelledby="page-title">
         <span className="eyebrow">Student housing, made simpler</span>
-        <h1 id="page-title">Roomie</h1>
+        <h1 id="page-title">Your people.<br />Your next place.</h1>
         <p className="intro">
           Find compatible people to share a place with, using the details that
           matter: budget, timing, location, and daily routines.

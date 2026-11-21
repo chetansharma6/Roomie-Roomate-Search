@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { ArrowUpRight, Monitor, Smartphone } from 'lucide-react';
+import { Monitor, Smartphone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface AppPreviewProps {
@@ -18,8 +18,10 @@ export function AppPreview({ route = '/discover?demo=1' }: AppPreviewProps) {
       <div className="shell">
         <div className="preview-heading">
           <div>
-            <h2 id={`${frameId}-heading`}>Try Roomie</h2>
-            <Link className="text-link" to={route}>Explore demo matches <ArrowUpRight aria-hidden="true" size={16} /></Link>
+            <span className="section-kicker">A little chemistry. A lot in common.</span>
+            <h2 id={`${frameId}-heading`}>Find your kind of roommate.</h2>
+            <Link className="text-link" to={route}>Explore fictional demo profiles</Link>
+            <p className="preview-description">Try the discovery experience. No account needed, and nothing is saved.</p>
           </div>
           <div className="view-toggle" role="group" aria-label="Preview layout">
             <button type="button" aria-controls={frameId} aria-pressed={mode === 'desktop'} onClick={() => setMode('desktop')}>

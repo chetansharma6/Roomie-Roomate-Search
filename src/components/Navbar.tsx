@@ -1,11 +1,13 @@
-import { ArrowUpRight, House } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { House } from 'lucide-react';
+import { Link, NavLink } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 interface NavbarProps {
   embedded?: boolean;
 }
 
 export function Navbar({ embedded = false }: NavbarProps) {
+  const { user, destination } = useAuth();
   const target = embedded ? '_top' : undefined;
 
   return (
@@ -19,12 +21,12 @@ export function Navbar({ embedded = false }: NavbarProps) {
           </Link>
           <div className="nav-links">
             <a className="nav-how" href="/#how-it-works" target={target}>How it works</a>
-            <Link to="/discover" target={target}>Discover</Link>
+            <NavLink to="/discover" target={target}>Discover</NavLink>
+            {user && <NavLink to="/account" target={target}>Account</NavLink>}
           </div>
-          <Link className="button button-outline nav-action" to="/signup" target={target}>
-            <span className="nav-action-long">Create a profile</span>
-            <span className="nav-action-short">Join</span>
-            <ArrowUpRight aria-hidden="true" size={16} />
+          <Link className="button button-outline nav-action" to={user ? (destination === '/onboarding' ? '/onboarding' : '/profile') : '/signup'} target={target}>
+            <span className="nav-action-long">{user ? 'My profile' : 'Create a profile'}</span>
+            <span className="nav-action-short">{user ? 'Profile' : 'Join'}</span>
           </Link>
         </nav>
       </header>

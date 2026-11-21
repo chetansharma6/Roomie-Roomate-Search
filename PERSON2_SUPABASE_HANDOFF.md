@@ -14,6 +14,7 @@ Apply migrations in timestamp order with `npm run supabase:db:push`:
 2. `supabase/migrations/20261121200000_roomie_profiles_requests.sql`
 3. `supabase/migrations/20261121210000_expand_profile_preferences.sql`
 4. `supabase/migrations/20261121220000_profile_photos.sql`
+5. `supabase/migrations/20261121230000_profile_lifestyle_details.sql`
 
 The fourth migration adds optional `photo_url` storage and its authenticated column grants. The fifth adds the validated optional `lifestyle_details` JSONB column and authenticated-only write grants. Compatibility fallbacks remain for older local/test schemas.
 
@@ -29,7 +30,7 @@ The canonical matching type is `src/types/profile.ts`. Raw rows and writable fie
 - Enable the **Before User Created** hook at `pg-functions://postgres/public/hook_restrict_signup_by_email_domain`.
 - Keep `usf.edu` active in `public.university_domains` and `VITE_ALLOWED_EMAIL_DOMAINS=usf.edu` in the frontend. The frontend list is UX only; the hook/database are the security boundary.
 - Set the production Site URL to `https://roomie-peach.vercel.app` and allow the exact callback `https://roomie-peach.vercel.app/signup`. Add localhost and exact Codespaces `/signup` callbacks only where needed.
-- Configure custom SMTP before relying on delivery to arbitrary student mailboxes.
+- Production Auth already allows the Vercel callback and has a 500/hour email-send limit. Custom SMTP is enabled, but its configured host (`smtp.rommie.com`) does not resolve and its sender address is a placeholder; replace these with a valid provider host and verified sender before relying on sign-in delivery.
 
 RLS behavior:
 

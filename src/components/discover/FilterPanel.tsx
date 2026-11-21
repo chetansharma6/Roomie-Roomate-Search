@@ -6,7 +6,7 @@ interface Props {
   onReset: () => void;
 }
 
-const field = 'mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
+const field = 'roomie-filter-field';
 
 function numberOrUndefined(v: string): number | undefined {
   if (v.trim() === '') return undefined;

@@ -12,9 +12,12 @@ tables, including the legacy domain table. The hosted transactional policy
 test in supabase/tests/roomie_rls.sql passed and rolled back all synthetic fixtures.
 Signed-out HTTP reads of profiles, roommate_requests and university_domains
 return 401 / 42501. Unsupported-domain signup returns 403 through the enabled
-Before User Created hook. Email confirmation remains enabled; local /signup
-redirect settings and SMTP status were not verified. Gemini secrets are configured and
-roommate-insights is deployed with JWT verification; a signed-out invocation returns 401.
+Before User Created hook. Email confirmation remains enabled. Current read-only inspection confirms
+the production redirect and 500/hour email limit, but the configured SMTP host
+smtp.rommie.com does not resolve and the sender address is a placeholder. Configure a
+valid SMTP provider and verified sender before relying on sign-in email delivery.
+Gemini secrets are configured and roommate-insights is deployed with JWT verification;
+a signed-out invocation returns 401.
 The Codespaces CORS preflight returns 200 with the exact forwarded origin, and the function
 allows the configured Roomie Vercel preview pattern.
 
@@ -42,11 +45,17 @@ already recorded migrations to Roomie.
    migrations/20261121210000_expand_profile_preferences.sql
    It adds the optional preference columns read by profileMapper and grants
    authenticated users write access only to those columns.
-5. Under Authentication > Hooks, enable Before User Created with the Postgres
+5. In a new query, run:
+   migrations/20261121220000_profile_photos.sql
+   It adds the optional photo_url column and authenticated-only write grants.
+6. In a new query, run:
+   migrations/20261121230000_profile_lifestyle_details.sql
+   It adds the validated lifestyle_details column and authenticated-only write grants.
+7. Under Authentication > Hooks, enable Before User Created with the Postgres
    function public.hook_restrict_signup_by_email_domain. Keep email confirmation
    enabled. Configure SMTP and /signup redirects as described in the main README.
-6. Set VITE_ALLOWED_EMAIL_DOMAINS=usf.edu locally and on the frontend deployment.
-7. Run the checks below using real signed-in student sessions. SQL Editor runs
+8. Set VITE_ALLOWED_EMAIL_DOMAINS=usf.edu locally and on the frontend deployment.
+9. Run the checks below using real signed-in student sessions. SQL Editor runs
    with administrative permissions and by itself does NOT demonstrate RLS.
 
 If applying manually now and using CLI migrations later, reconcile the CLI

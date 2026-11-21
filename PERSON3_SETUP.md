@@ -53,7 +53,7 @@ Create one in [Google AI Studio](https://aistudio.google.com/apikey), put it in 
 
 ## Person 2 — connecting Supabase
 
-Person 2's schema and RLS are in `supabase/migrations/20261121200000_roomie_profiles_requests.sql`, with SQL Editor instructions and the database test checklist in `supabase/DATABASE_SETUP.txt`. The auth and profile migrations were successfully applied to hosted project `xcelqqmncgeveawkumje` on 2026-11-21. The additive matching-preference migration is in `supabase/migrations/20261121210000_expand_profile_preferences.sql`. All tables have RLS enabled; hosted transactional policy checks passed and signed-out Data API requests were denied. **Matching through a real student session is still unverified.**
+Person 2's schema and RLS are in `supabase/migrations/20261121200000_roomie_profiles_requests.sql`, with SQL Editor instructions and the database test checklist in `supabase/DATABASE_SETUP.txt`. All five migrations, including the optional photo and lifestyle-detail columns, were applied to hosted project `xcelqqmncgeveawkumje` on 2026-11-21. All tables have RLS enabled; hosted transactional policy checks passed and signed-out Data API requests were denied. **Matching through a real student session is still unverified.**
 
 The profile migrations provide the columns consumed by `src/lib/profileMapper.ts` (`rowToProfile`), including optional `monthly_rent`, `room_type`, `study_environment`, `guest_frequency`, `smoking`, and `dealbreakers`. `move_in_date` is nullable for drafts in storage, but required by the mapper for discovery. `university`, `university_id`, and `verified_university_email` are database-derived. `is_active` controls discoverability.
 
