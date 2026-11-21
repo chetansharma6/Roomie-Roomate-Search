@@ -13,6 +13,7 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "smoke:gemini": "node --env-file-if-exists=.env.local --import tsx scripts/smoke-gemini.ts",
+    "seed:demo-profiles": "node --env-file-if-exists=.env.demo.local --import tsx scripts/seed-demo-profiles.ts",
     "supabase:serve": "npx supabase functions serve roommate-insights --env-file supabase/functions/.env",
     "supabase:deploy": "npx supabase functions deploy roommate-insights --use-api",
     "supabase:db:push": "npx supabase db push --remote --skip-vault"

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { authErrorMessage, supportedUniversityDomains } from '../lib/auth'
 import { useAuth } from '../hooks/useAuth'
@@ -110,6 +110,8 @@ export default function SignIn({ redirectAfterSignIn = true }: { redirectAfterSi
                 Sign out
               </button>
             </div>
+
+            {destination === '/discover' && <p><Link to="/profile">Edit your saved roommate profile</Link></p>}
 
             <form className="insights-form" onSubmit={requestInsights}>
               <div>
