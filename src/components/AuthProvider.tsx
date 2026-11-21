@@ -26,6 +26,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     revision.current += 1
   }, [])
 
+  const resetSignedOut = useCallback(() => {
+    invalidateRevision()
+    callbackError.current = null
+    setState(signedOut)
+  }, [invalidateRevision])
+
   useEffect(() => {
     let active = true
     let unsubscribe: (() => void) | undefined
@@ -37,11 +43,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void subscribeToAuth((event) => {
       if (!active) return
       if (event === 'INITIAL_SESSION') return // Explicit restoration below handles this once.
-      ++revision.current
       clearTimeout(timer)
       if (event === 'SIGNED_OUT') {
-        setState(signedOut)
+        resetSignedOut()
       } else {
+        invalidateRevision()
         // Keep SDK calls outside onAuthStateChange to avoid its internal lock.
         timer = setTimeout(() => { if (active) void refresh() }, 0)
       }
@@ -55,13 +61,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       timer = setTimeout(() => { if (active) void refresh() }, 0)
     }
     return () => { active = false; invalidateRevision(); clearTimeout(timer); unsubscribe?.() }
-  }, [invalidateRevision, refresh])
+  }, [invalidateRevision, refresh, resetSignedOut])
 
   const logout = useCallback(async () => {
     await signOut()
-    ++revision.current
-    setState(signedOut)
-  }, [])
+    resetSignedOut()
+  }, [resetSignedOut])
 
   return <AuthContext.Provider value={{ ...state, refresh, sendMagicLink, signOut: logout }}>{children}</AuthContext.Provider>
 }
