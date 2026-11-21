@@ -86,6 +86,36 @@ export function validateGeminiMatches(raw: unknown, allowedIds: ReadonlySet<stri
   return { ok: true, matches };
 }
 
+const opt = <T extends [string, ...string[]]>(...v: T) => z.enum(v).optional();
+
+/** Public candidate card returned by /api/match (unknown keys are stripped). */
+export const candidateProfileSchema = z.object({
+  id: text(128),
+  universityId: text(64),
+  displayName: text(120),
+  bio: z.string().max(2000),
+  budgetMin: z.number(),
+  budgetMax: z.number(),
+  distanceFromCampusMiles: z.number(),
+  moveInDate: text(32),
+  roommatesWanted: z.number(),
+  housingStatus: z.enum(['has_room', 'needs_room']),
+  verification: z.enum(['unverified', 'university_email_verified']),
+  monthlyRent: z.number().optional(),
+  roomType: opt('private', 'shared', 'either'),
+  cleanliness: opt('relaxed', 'moderate', 'tidy', 'very_tidy'),
+  sleepSchedule: opt('early_bird', 'flexible', 'night_owl'),
+  noiseTolerance: opt('quiet', 'moderate', 'lively'),
+  studyEnvironment: opt('silent', 'quiet', 'background_noise_ok', 'away_from_home'),
+  guestFrequency: opt('never', 'rarely', 'sometimes', 'often'),
+  petPreference: opt('no_pets', 'pets_ok', 'has_pets'),
+  smoking: opt('smoke_free', 'outside_only', 'smoker'),
+  interests: z.array(z.string().max(80)).max(30).optional(),
+  dealbreakers: z.array(z.enum(['no_smoking', 'no_pets', 'no_frequent_guests'])).max(3).optional(),
+  major: z.string().max(120).optional(),
+  academicYear: opt('freshman', 'sophomore', 'junior', 'senior', 'graduate'),
+});
+
 /** Shape of POST /api/match responses, validated by the browser client. */
 export const matchResponseSchema = z.object({
   source: z.enum(['gemini', 'fallback']),
@@ -95,4 +125,5 @@ export const matchResponseSchema = z.object({
   model: z.string().optional(),
   matches: z.array(matchResultSchema),
   disclaimer: z.string(),
+  profiles: z.array(candidateProfileSchema).max(500).optional(),
 });

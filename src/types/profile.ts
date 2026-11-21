@@ -108,6 +108,12 @@ export interface MatchResponse {
   model?: string;
   matches: MatchResult[];
   disclaimer: string;
+  /**
+   * Public candidate cards for the returned matches, supplied by the server so a
+   * signed-in browser never needs direct access to the profiles table. Contains
+   * only RoommateProfile fields (no email or other private columns).
+   */
+  profiles?: RoommateProfile[];
 }
 
 export const SCORE_DISCLAIMER =
