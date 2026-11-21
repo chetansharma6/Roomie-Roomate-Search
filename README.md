@@ -4,7 +4,7 @@ Roomie is a student-focused room and roommate discovery project. It is designed 
 
 ## Project Status
 
-The repository now contains an initial React, TypeScript, and Vite application with a Supabase browser client and passwordless email authentication. Profile persistence, discovery, matching, database migrations, and automated tests are still planned and should not be presented as complete.
+The repository now contains a React, TypeScript, and Vite application with passwordless Supabase authentication and an authenticated Supabase Edge Function for Gemini-powered roommate conversation insights. Profile persistence, discovery, matching, database migrations, and automated tests are still planned and should not be presented as complete.
 
 ## Problem
 
@@ -87,6 +87,7 @@ React, TypeScript, Vite, and Supabase Auth are implemented. The remaining entrie
 | Styling | Tailwind CSS |
 | Components | shadcn/ui or equivalent accessible primitives |
 | Authentication | Supabase Auth |
+| AI orchestration | Supabase Edge Functions and Gemini API |
 | Database | Supabase and PostgreSQL |
 | Matching logic | TypeScript |
 | Hosting | Vercel |
@@ -110,6 +111,8 @@ npm run dev
 npm run build
 npm run lint
 npm run preview
+npm run supabase:serve
+npm run supabase:deploy
 ```
 
 ## Environment Variables
@@ -125,6 +128,28 @@ Never commit a Supabase service-role key, secret key, or real student data. Vite
 
 Keep local values in `.env.local`, which is ignored by Git. Only the project URL and publishable key belong in `VITE_` variables. Server-only secrets must never use that prefix or be imported by code under `src/`.
 
+The `roommate-insights` Edge Function requires two server-only secrets:
+
+```dotenv
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-3.5-flash
+```
+
+Set production values in Supabase under **Edge Functions → Secrets**, or with the Supabase CLI:
+
+```bash
+supabase secrets set --env-file path/to/ignored-gemini.env
+npm run supabase:deploy
+```
+
+For local function development, copy `supabase/functions/.env.example` to the ignored `supabase/functions/.env`. Never prefix the Gemini key with `VITE_`, return it in an HTTP response, or write it to logs.
+
+## AI Roommate Insights
+
+Signed-in users can submit a short description of their housing and everyday living preferences. The browser sends it to the authenticated `roommate-insights` Edge Function, which validates the user and input before contacting Gemini. The function returns conversation prompts and practical considerations; it does not make housing eligibility, trust, safety, or guaranteed-compatibility decisions.
+
+Users should not submit names, contact details, exact addresses, or other sensitive personal information. AI output can be incomplete and should be independently verified.
+
 ## Project Structure
 
 The current foundation is:
@@ -137,12 +162,17 @@ roomie/
     App.tsx
     main.tsx
     styles.css
+  supabase/
+    functions/
+      roommate-insights/
+        index.ts
+    config.toml
   .env.example
   package.json
   README.md
 ```
 
-The current single page provides passwordless email sign-in and sign-out. Representative future routes are `/auth`, `/onboarding`, `/discover`, and `/profile/:id`.
+The current single page provides passwordless email authentication and authenticated AI roommate insights. Representative future routes are `/auth`, `/onboarding`, `/discover`, and `/profile/:id`.
 
 ## Planned Data Model
 
@@ -226,6 +256,8 @@ The proposed delivery sequence is:
 8. Add an interest request flow if persistence and authorization are stable.
 9. Add automated tests and database security checks.
 10. Deploy and test the complete browser experience on desktop and mobile.
+
+Gemini-powered roommate conversation insights are implemented through a server-side Supabase Edge Function. They supplement rather than replace the deterministic compatibility model planned above.
 
 Demo data should always be labeled as fictional and must not be presented as real users or listings.
 
