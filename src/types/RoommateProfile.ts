@@ -1,6 +1,7 @@
 export interface RoommateProfile {
   id: string;
   name: string;
+  photoUrl?: string;
   university: string;
   major: string;
   bio: string;

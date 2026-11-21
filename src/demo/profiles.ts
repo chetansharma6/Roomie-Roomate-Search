@@ -4,6 +4,7 @@ export const demoProfiles = [
   {
     id: 'demo-maya',
     name: 'Maya Brooks',
+    photoUrl: '/demo-maya.webp',
     university: 'UNF',
     major: 'Psychology',
     bio: 'I like cooking together some nights and keeping weeknights quiet. Looking for one person to tour apartments with near campus.',
@@ -20,6 +21,7 @@ export const demoProfiles = [
   {
     id: 'demo-jordan',
     name: 'Jordan Lee',
+    photoUrl: '/demo-jordan.webp',
     university: 'UNF',
     major: 'Computer Science',
     bio: 'I have a room opening up in a two-bedroom apartment. I’m usually studying or playing guitar with headphones after class.',
@@ -36,6 +38,7 @@ export const demoProfiles = [
   {
     id: 'demo-amara',
     name: 'Amara Davis',
+    photoUrl: '/demo-amara.webp',
     university: 'UNF',
     major: 'Graphic Design',
     bio: 'Looking for two roommates who like a relaxed, welcoming home. I love weekend coffee runs and making art at the kitchen table.',
