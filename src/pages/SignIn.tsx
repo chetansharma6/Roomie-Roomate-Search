@@ -161,7 +161,7 @@ export default function SignIn() {
               name="email"
               type="email"
               autoComplete="email"
-              placeholder="you@university.edu"
+              placeholder="you@usf.edu"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
