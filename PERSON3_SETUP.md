@@ -154,3 +154,27 @@ Import the repo; add `GEMINI_API_KEY` (and Supabase vars) in project settings. `
 - Gemini analyses the top 10 candidates by baseline score within a 20-second model timeout; the browser waits up to 25 seconds and the Vercel Function is capped at 30 seconds. In AI mode only those candidates are shown.
 - The profile fields for lifestyle and `monthly_rent` are my proposal; Person 2 must confirm the schema.
 - No pagination, saved matches, or messaging.
+
+## QA notes (feature/gemini-qa)
+
+### Scoring changes
+- Direct clashes (smoke-free vs smoker, pet-free vs pet owner) cap the baseline score at 50; a severe clash in cleanliness, sleep, noise or guests caps it at 70 (`CONFLICT_CAPS` in `src/lib/scoring.ts`). Previously such pairs scored 86-94.
+- Scores with little shared data (< 50% of weight covered) are pulled toward 50, so a near-empty profile is no longer a "100% match".
+
+### Demo script (route `/matches`, `ROOMIE_DEMO_MODE=true`, fictional students only)
+1. Open `/matches`: instant baseline scores, labelled "baseline scores".
+2. Apply filters (e.g. max budget 800, distance 3 mi): the list narrows deterministically; Cole (smoker, filtered by dealbreaker) and Priya (over budget) never appear.
+3. Click **Find My AI Matches**: badge becomes "Gemini-powered analysis". Open Maya (strong match: shared sleep/cleanliness) and Tyler (conflicts: night owl, lively, guests, relaxed cleanliness), then show "Questions to discuss".
+4. To show the fallback honestly, remove `GEMINI_API_KEY` and restart: banner and "Baseline match · not AI" badge appear.
+The prompt-injection profile (`ADVERSARIAL_TEST_PROFILES`) is not in `DEMO_PROFILES` and never appears in the demo.
+
+### Remaining requirements for real Supabase integration (Person 2)
+- A `profiles` table with the columns in `rowToProfile` (required: id, university_id, display_name, budget_min/max, distance_from_campus_miles, move_in_date, roommates_wanted, housing_status). Rows missing one are skipped silently.
+- `SUPABASE_SECRET_KEY` set on the server only; RLS should not expose other students' rows directly to the browser (matching reads them with the secret key and returns only public card fields).
+- Mapper accepts `need_room/have_room` and `needs_room/has_room`; confirm which one the real table uses.
+- Not yet exercised against a live Supabase project; only mocked REST is tested.
+
+### Known limitations
+- Gemini may return fewer candidates than sent; unreturned candidates are simply not shown (no mixing of AI and baseline results).
+- Live Gemini checked with one smoke run (8 candidates): ranking sensible, no invented attributes or logistics observed. That is a single sample, not a guarantee.
+- Touch targets in Person 1's navbar ("Roomie.", "Discover", "How it works") are 21-36px high; left untouched.
