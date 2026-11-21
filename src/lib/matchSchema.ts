@@ -112,6 +112,7 @@ export const candidateProfileSchema = z.object({
   smoking: opt('smoke_free', 'outside_only', 'smoker'),
   interests: z.array(z.string().max(80)).max(30).optional(),
   dealbreakers: z.array(z.enum(['no_smoking', 'no_pets', 'no_frequent_guests'])).max(3).optional(),
+  photoUrl: z.url({ protocol: /^https$/ }).max(2048).optional(),
   major: z.string().max(120).optional(),
   academicYear: opt('freshman', 'sophomore', 'junior', 'senior', 'graduate'),
 });

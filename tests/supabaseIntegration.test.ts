@@ -115,7 +115,7 @@ describe('authenticated profiles -> matching (mocked Supabase + Gemini)', () => 
     );
 
     const out = await runMatch({
-      method: 'POST', body: {}, authorization: 'Bearer user-jwt', env,
+      method: 'POST', body: {}, authorization: 'Bearer user-jwt', env: { ...env, ROOMIE_DEMO_MODE: 'true' },
       deps: { fetchImpl: fetchImpl as unknown as typeof fetch, generate },
     });
     const json = out.json as MatchResponse;

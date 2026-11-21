@@ -120,7 +120,7 @@ export async function runMatch({ method, body, authorization, clientKey, env, de
   // ---- identity: never trust a client-supplied user id outside demo mode ----
   let repo: ProfileRepository;
   let requesterId: string;
-  const demo = isDemoModeEnabled(env);
+  const demo = !authorization && isDemoModeEnabled(env);
   if (demo) {
     repo = deps.demoRepository ?? createDemoRepository();
     requesterId = demoStudentId ?? DEMO_STUDENT_ID;

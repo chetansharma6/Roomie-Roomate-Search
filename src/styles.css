@@ -279,3 +279,94 @@ button { cursor: pointer; }
   .button, .swipe-card { transition: none; }
   .swipe-hand { display: none; animation: none; }
 }
+
+.student-discover { width: min(100% - 2 * var(--page-gutter), 76rem); margin-inline: auto; padding-block: 1.5rem 2rem; }
+.student-discover-header { display: flex; align-items: center; gap: .55rem; margin-bottom: 1rem; }
+.student-discover-header h1 { flex: 1; font-size: clamp(1.25rem, 3.4vw, 2rem); font-weight: 800; }
+.student-mobile-home, .student-filter-toggle { display: none; }
+.student-discover-layout { display: grid; grid-template-columns: minmax(12rem, 17.5rem) minmax(0, 1fr); gap: 1.5rem; }
+.student-filters { align-self: start; border: 1px solid var(--color-roomie-line); border-radius: 1rem; background: #fffefb; padding: 1rem; }
+.student-filters h2 { margin-bottom: .65rem; font-weight: 800; }
+.student-filters > .button { width: 100%; margin-top: .75rem; }
+.student-deck { position: relative; min-width: 0; }
+.student-deck:focus { outline: none; }
+.student-swipe-stage {
+  display: grid; grid-template-columns: 3.5rem minmax(0, 1fr) 3.5rem; align-items: center;
+  gap: clamp(.4rem, 1.2vw, 1rem); max-width: 39rem; margin-inline: auto;
+}
+.student-profile { overflow: hidden; border: 1px solid var(--color-roomie-line); border-radius: 1rem; background: #fffefb; box-shadow: 0 9px 22px #20423514; }
+.student-photo {
+  position: relative; display: grid; place-items: center; aspect-ratio: 1.65 / 1; overflow: hidden;
+  background: var(--color-roomie-mint); color: var(--color-roomie-teal);
+  font: 800 clamp(3rem, 10vw, 5rem) / 1 var(--font-display);
+}
+.student-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 38%; }
+.student-profile-copy { padding: 1rem 1.25rem 1.2rem; overflow-wrap: anywhere; }
+.student-profile-copy h2 { font-size: 1.4rem; font-weight: 800; }
+.student-profile-copy p { font-size: .85rem; }
+.student-score { margin-top: .35rem; font-weight: 800; color: var(--color-roomie-teal); }
+.student-tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-block: .65rem; }
+.student-tags li { padding: .3rem .6rem; border-radius: 1rem; background: var(--color-roomie-mint); color: var(--color-roomie-teal); font-size: .75rem; font-weight: 750; }
+.student-more { margin-top: .4rem; border-color: var(--color-roomie-line); background: var(--color-roomie-mint); color: var(--color-roomie-teal); }
+.student-details { width: min(37rem, 100% - 2rem); }
+.student-deck-message { display: grid; justify-items: center; gap: .65rem; padding: 2rem 1rem; text-align: center; }
+.student-deck-message h2 { font-weight: 800; }
+.student-ranking-note, .student-interest-error { margin: .75rem auto 0; max-width: 38rem; padding: .5rem .85rem; text-align: center; font-size: .78rem; }
+.student-interest-error { border-radius: .65rem; color: #8c2431; background: #fff1f2; }
+
+@media (max-width: 720px) {
+  .student-desktop-chrome { display: none; }
+  .student-discover { position: relative; width: 100%; min-height: 100dvh; padding: 0; overflow-x: clip; }
+  .student-discover-header {
+    position: absolute; z-index: 3; inset: 0 0 auto; margin: 0;
+    padding: max(.5rem, env(safe-area-inset-top)) .75rem .75rem;
+  }
+  .student-discover:has(.student-profile) .student-discover-header { color: white; }
+  .student-discover-header h1 { font-size: clamp(1rem, 4.5vw, 1.25rem); }
+  .student-discover-header .icon-button { flex: 0 0 2.75rem; }
+  .student-mobile-home, .student-filter-toggle { display: grid; }
+  .student-discover-layout { display: block; }
+  .student-filters {
+    display: none; position: absolute; z-index: 4; inset: calc(max(.5rem, env(safe-area-inset-top)) + 3rem) .75rem auto;
+    max-height: calc(100dvh - max(.5rem, env(safe-area-inset-top)) - 4rem); overflow-y: auto;
+    box-shadow: 0 10px 36px #192a2550;
+  }
+  .student-filters[data-open="true"] { display: block; }
+  .student-deck:not(:has(.student-profile)) { padding: 4rem 1rem 1rem; }
+  .student-swipe-stage { position: relative; display: block; max-width: none; }
+  .student-profile { position: relative; display: flex; min-height: 100dvh; align-items: flex-end; border: 0; border-radius: 0; color: white; }
+  .student-photo { position: absolute; inset: 0; aspect-ratio: auto; background: #36594e; color: var(--color-roomie-mint); }
+  .student-photo::after {
+    position: absolute; inset: 0; content: '';
+    background: linear-gradient(180deg, #101f1bc9, transparent 22%, transparent 42%, #101f1bc9 78%, #101f1b 100%);
+  }
+  .student-profile-copy {
+    position: relative; width: 100%; padding: 1rem clamp(.85rem, 4vw, 1.5rem) max(2rem, env(safe-area-inset-bottom));
+    text-shadow: 0 1px 3px #101f1b;
+  }
+  .student-profile-copy h2 { font-size: clamp(1.55rem, 7vw, 2.15rem); }
+  .student-score { color: #d8f1e1; }
+  .student-profile-copy .student-tags li { background: #192a25bb; color: white; border: 1px solid #ffffff48; }
+  .student-more {
+    display: flex; width: fit-content; margin: .85rem auto 0; padding-inline: .9rem;
+    border-color: #ffffff68; background: #ffffff26; color: white; backdrop-filter: blur(12px);
+  }
+  .student-swipe-stage .swipe-choice {
+    position: absolute; z-index: 2; bottom: max(2rem, env(safe-area-inset-bottom));
+    --control-inset: max(1.1rem, calc((100% - 22rem) / 2));
+  }
+  .student-swipe-stage .swipe-choice-pass { left: var(--control-inset); }
+  .student-swipe-stage .swipe-choice-interest { right: var(--control-inset); }
+  .student-swipe-stage .swipe-choice > span:last-child { color: white; text-shadow: 0 1px 3px #101f1b; }
+  .student-details {
+    position: fixed; inset: auto 0 0; width: 100%; max-width: none; max-height: 85dvh; margin: 0;
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom)); border-radius: 1.2rem 1.2rem 0 0;
+    overscroll-behavior: contain;
+  }
+  .student-ranking-note, .student-interest-error {
+    position: absolute; z-index: 2; top: calc(max(.5rem, env(safe-area-inset-top)) + 2.75rem);
+    width: fit-content; margin-inline: auto; inset-inline: .5rem; border-radius: .65rem;
+  }
+  .student-ranking-note { color: white; background: #192a25c9; }
+  .student-interest-error { top: calc(max(.5rem, env(safe-area-inset-top)) + 5.5rem); }
+}

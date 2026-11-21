@@ -8,32 +8,11 @@ import { useAuth } from './hooks/useAuth';
 import { Onboarding, StudentDiscover } from './pages/AuthenticatedRoutes';
 
 const SignIn = lazy(() => import('./pages/SignIn'));
-const hasSupabase = Boolean(
-  import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-);
-
-function Signup() {
-  return hasSupabase ? (
-    <Suspense fallback={<main className="shell route-notice" id="main-content" role="status">Loading sign-in…</main>}>
-      <SignIn />
-    </Suspense>
-  ) : <SignupPlaceholder />;
-}
-
-function SignupPlaceholder() {
-  const [params] = useSearchParams();
-  const housing = params.get('housing');
-  const titles = {
-    need_room: 'Looking for a place?',
-    have_room: 'Have a room to fill?',
-  };
-
+function Signup({ redirectAfterSignIn = true }: { redirectAfterSignIn?: boolean }) {
   return (
-    <main className="shell route-notice" id="main-content">
-      <h1>{housing === 'need_room' || housing === 'have_room' ? titles[housing] : 'Create a profile'}</h1>
-      <p>University email sign-up is coming soon. You can explore the example roommate profiles in the meantime.</p>
-      <Link className="button button-primary" to="/discover">Explore demo profiles</Link>
-    </main>
+    <Suspense fallback={<main className="shell route-notice" id="main-content" role="status">Loading sign-in…</main>}>
+      <SignIn redirectAfterSignIn={redirectAfterSignIn} />
+    </Suspense>
   );
 }
 
@@ -46,10 +25,10 @@ function PageNotFound() {
   );
 }
 
-function DiscoveryRoute({ embedded }: { embedded: boolean }) {
+function DiscoveryRoute({ embedded, demo }: { embedded: boolean; demo: boolean }) {
   const { user, loading, destination, error } = useAuth();
-  if (embedded) return <DemoDiscover embedded />;
-  if (loading) return <main className="shell route-notice" role="status">Restoring session…</main>;
+  if (demo) return <DemoDiscover embedded={embedded} />;
+  if (loading && !user) return <main className="shell route-notice" role="status">Restoring session…</main>;
   if (error) return <Navigate to="/signup" replace />;
   if (!user) return <DemoDiscover embedded={embedded} />;
   if (destination === '/onboarding') return <Navigate to="/onboarding" replace />;
@@ -61,7 +40,10 @@ export function App() {
   const [params] = useSearchParams();
   const discovering = useLocation().pathname.replace(/\/+$/, '').toLowerCase() === '/discover';
   const embedded = discovering && params.get('preview') === '1' && window.self !== window.top;
-  const showSiteChrome = !discovering || (!embedded && Boolean(user));
+  const demo = embedded || params.get('demo') === '1';
+  const showSiteChrome = !discovering || (!demo && Boolean(user));
+
+  const chromeClass = discovering && !demo && user ? 'student-desktop-chrome' : undefined;
 
   useLayoutEffect(() => {
     if (discovering) window.scrollTo(0, 0);
@@ -69,14 +51,14 @@ export function App() {
 
   return (
     <>
-      {showSiteChrome && <Navbar />}
+      {showSiteChrome && <div className={chromeClass}><Navbar /></div>}
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/discover" element={<DiscoveryRoute embedded={embedded} />} />
+        <Route path="/discover" element={<DiscoveryRoute embedded={embedded} demo={demo} />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/auth" element={<Navigate to="/signup" replace />} />
         <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/account" element={hasSupabase ? <Suspense fallback={<main role="status">Loading account…</main>}><SignIn redirectAfterSignIn={false} /></Suspense> : <SignupPlaceholder />} />
+        <Route path="/account" element={<Signup redirectAfterSignIn={false} />} />
         <Route path="/matches" element={
           <main className="min-h-screen bg-slate-50 text-slate-900" id="main-content">
             <Discover />
@@ -84,7 +66,7 @@ export function App() {
         } />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
-      {showSiteChrome && <footer className="site-footer"><div className="shell">Roomie · HackJam 2026</div></footer>}
+      {showSiteChrome && <footer className={`site-footer ${chromeClass ?? ''}`}><div className="shell">Roomie · HackJam 2026</div></footer>}
     </>
   );
 }

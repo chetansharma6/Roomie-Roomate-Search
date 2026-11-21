@@ -1,5 +1,15 @@
 import type { RoommateProfile } from '../types/profile.js';
 
+export function parseProfilePhotoUrl(value: unknown): string | undefined {
+  if (typeof value !== 'string' || value.length > 2048) return undefined;
+  try {
+    const url = new URL(value);
+    if (url.protocol === 'https:' && !url.username && !url.password) return url.href;
+  } catch {
+    return undefined;
+  }
+}
+
 type Row = Record<string, unknown>;
 
 const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v : undefined);
@@ -60,6 +70,7 @@ export function rowToProfile(row: Row): RoommateProfile | null {
           d === 'no_smoking' || d === 'no_pets' || d === 'no_frequent_guests',
         )
       : undefined,
+    photoUrl: parseProfilePhotoUrl(row.photo_url),
     major: str(row.major),
     academicYear: oneOf(row.academic_year, ['freshman', 'sophomore', 'junior', 'senior', 'graduate']),
   };
