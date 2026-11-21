@@ -28,6 +28,7 @@
   h1 { margin: .5rem 0; font-size: clamp(3rem, 10vw, 5.5rem); line-height: .95; letter-spacing: -.06em; }
   .intro { max-width: 34rem; margin: 1.5rem 0 2.5rem; color: #4e635e; font-size: 1.12rem; line-height: 1.65; }
   .auth-panel { display: grid; gap: .75rem; }
+  .auth-hint { color: #5c706a; line-height: 1.45; }
   .member-area { display: grid; gap: 2rem; }
   .session-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
   .session-bar p { margin: 0; overflow-wrap: anywhere; }
