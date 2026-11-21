@@ -82,6 +82,18 @@ describe('createSupabaseRepository (mocked REST)', () => {
     });
   });
 
+  it('retries matching reads without optional photo_url when the hosted schema has not applied that migration', async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ code: '42703', message: 'column profiles.photo_url does not exist' }), { status: 400 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([row('me')]), { status: 200 }));
+    const repo = createSupabaseRepository(env, userToken, fetchImpl as unknown as typeof fetch);
+    expect((await repo.getProfile('me'))?.id).toBe('me');
+    const firstUrl = String(fetchImpl.mock.calls[0]![0]);
+    const fallbackUrl = String(fetchImpl.mock.calls[1]![0]);
+    expect(firstUrl).toContain('photo_url');
+    expect(fallbackUrl).not.toContain('photo_url');
+  });
+
   it('url-encodes ids so a crafted id cannot add PostgREST filters', async () => {
     const fetchImpl = vi.fn(async (...args: [string | URL, RequestInit?]) => ({ ok: true, status: 200, json: async () => [args.length] }) as unknown as Response);
     await createSupabaseRepository(env, userToken, fetchImpl as unknown as typeof fetch).getProfile('x&select=email');

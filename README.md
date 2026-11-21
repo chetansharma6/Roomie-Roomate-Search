@@ -4,7 +4,7 @@ Roomie is a student-focused room and roommate discovery project. It is designed 
 
 ## Project Status
 
-The repository contains a React, TypeScript, and Vite application with passwordless Supabase authentication, fictional demo discovery, deterministic compatibility scoring, Gemini-assisted matching through a Vercel Function, and an authenticated Supabase Edge Function for Gemini-powered roommate conversation insights. Live profile persistence and database migrations are still pending.
+The repository contains a React, TypeScript, and Vite application with passwordless Supabase authentication, fictional demo discovery, deterministic compatibility scoring, Gemini-assisted matching through a Vercel Function, and an authenticated Supabase Edge Function for Gemini-powered roommate conversation insights. The hosted project has all four database migrations applied; live student onboarding and matching still require account-level verification.
 
 ## Problem
 
@@ -151,11 +151,11 @@ Do not disable email confirmation to work around delivery limits. For a demo wit
 
 ### Shared authentication service
 
-`src/lib/auth.ts` exports `sendMagicLink(email)`, `getCurrentUser()`, `getSession()`, `signOut()`, and `isSupportedUniversityEmail(email)`. The application is wrapped in `AuthProvider`; screens can call `useAuth()` from `src/hooks/useAuth.ts` for `user`, `session`, `loading`, `error`, `destination`, `sendMagicLink`, `signOut`, and `refresh`. Call `refresh()` after creating a profile. Session restoration verifies identity through Supabase Auth before checking profile existence. New users go to `/onboarding`; existing profiles go to `/discover`. `/account` provides sign-out and conversation insights.
+`src/lib/auth.ts` exports `sendMagicLink(email)`, `getCurrentUser()`, `getSession()`, `signOut()`, and `isSupportedUniversityEmail(email)`. The application is wrapped in `AuthProvider`; screens can call `useAuth()` from `src/hooks/useAuth.ts` for `user`, `session`, `loading`, `error`, `destination`, `sendMagicLink`, `signOut`, and `refresh`. Call `refresh()` after creating a profile. Session restoration verifies identity through Supabase Auth before checking profile existence. New users go to `/onboarding`; existing profiles go to `/discover`. `/account` provides account and sign-out controls; profile comparisons and AI Insights are in Discover.
 
 Signed-in students can open `/profile` to retrieve and edit their persisted matching profile. Fictional database candidates can be created only in a dedicated nonproduction project with `npm run seed:demo-profiles`; see `PERSON2_SUPABASE_HANDOFF.md` for the gated setup.
 
-Signed-in Discover uses the same university-scoped profile reads and `/api/match` scores. Saving a profile with a move-in date completes the quiz. The deck builds preference tags from the saved answers, and **Interested** creates a pending row in `roommate_requests`. Apply `20261121220000_profile_photos.sql` before deploying this version. It adds the optional `profiles.photo_url` field used for profile photos. Students without a usable image see initials.
+Signed-in Discover uses the same university-scoped profile reads and `/api/match` scores. Saving a profile with a move-in date completes the quiz. The deck builds preference tags from the saved answers, and **Interested** creates a pending row in `roommate_requests`; recipients can accept or decline from Discover. `20261121220000_profile_photos.sql` adds optional `profiles.photo_url` storage and its authenticated grants; it is applied to the hosted project. Students without a usable image see initials.
 
 Run `npm test -- tests/auth.test.ts` for the authentication service tests. One test normalizes `Student@USF.EDU`, confirms that `signInWithOtp` receives the `/signup` callback, and checks that invalid or unsupported emails never reach Supabase. The suite also checks expired sessions/links, rate limits, confirmation, profile routing, and sign-out. These are automated tests with mocked Supabase responses.
 

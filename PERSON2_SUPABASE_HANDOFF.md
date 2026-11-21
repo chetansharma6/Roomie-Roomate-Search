@@ -2,7 +2,7 @@
 
 ## Current status
 
-Roomie's authenticated profile path uses Supabase Auth, PostgreSQL RLS, and the caller's JWT. The Vercel matching function does not use a service-role key. As of 2026-11-21, the linked hosted project (`xcelqqmncgeveawkumje`) reports all three committed migrations below as applied. The hosted RLS smoke test was previously run successfully; the automated TypeScript tests use mocks and do not independently prove hosted RLS.
+Roomie's authenticated profile path uses Supabase Auth, PostgreSQL RLS, and the caller's JWT. The Vercel matching function does not use a service-role key. All four migrations, including `20261121220000_profile_photos.sql`, are applied to hosted project `xcelqqmncgeveawkumje` in timestamp order. The hosted `supabase/tests/roomie_rls.sql` smoke test passed and rolled back its synthetic fixtures. An anon-key read selecting `photo_url` returns `42501` (RLS) rather than `42703` (missing column); authenticated photo insert/update column grants are present, while anon grants are absent.
 
 Mailbox delivery, a complete real-student sign-in/profile/sign-out/sign-in walkthrough, and a nonempty production Gemini match using stored candidates still require manual verification. A confirmed university mailbox proves control of that mailbox, not current enrollment.
 
@@ -13,6 +13,9 @@ Apply migrations in timestamp order with `npm run supabase:db:push`:
 1. `supabase/migrations/20261121180000_restrict_signup_email_domains.sql`
 2. `supabase/migrations/20261121200000_roomie_profiles_requests.sql`
 3. `supabase/migrations/20261121210000_expand_profile_preferences.sql`
+4. `supabase/migrations/20261121220000_profile_photos.sql`
+
+The fourth migration adds optional `photo_url` storage and its authenticated column grants. The compatibility fallback remains for older local/test schemas.
 
 `public.profiles.id` is both the primary key and a foreign key to `auth.users(id)`, so one account can have at most one profile. Required matching columns are `id`, `university_id`, `display_name`, `budget_min`, `budget_max`, `distance_from_campus_miles`, `move_in_date`, `roommates_wanted`, and `housing_status`. The database stores `have_room` / `need_room`; `rowToProfile` maps those to Person 3's canonical `has_room` / `needs_room` values.
 
@@ -115,6 +118,48 @@ ROOMIE_DEMO_MODE=false
 Only the three `VITE_` values are browser-visible. `GEMINI_API_KEY` must remain server-only. The production matching adapter does not require `SUPABASE_SECRET_KEY` or `SUPABASE_JWKS_URL`; the secret key is needed only by the explicitly invoked nonproduction seed script. Redeploy after changing any `VITE_` variable because Vite embeds it at build time.
 
 The production alias was Ready when inspected on 2026-11-21, but that deployment was created before the latest `main` profile-service merges. Confirm the deployed Git commit after this branch is reviewed and merged; do not assume the current alias contains these changes.
+
+## Roomie AI Insights Edge Function
+
+`supabase/functions/roommate-insights/index.ts` requires a signed-in user JWT (`verify_jwt = true` in `supabase/config.toml`). Its browser request body accepts **only** `{ "targetProfileId": "<uuid>" }`. The function uses the caller's RLS-scoped Supabase client to load the requester and target profile, so the browser never provides descriptions or controls a user ID. It sends a minimized payload without emails, IDs, names, photos, or university fields to Gemini and validates the structured response before returning it.
+
+Configure these Supabase Edge Function secrets (not Vite/Vercel browser variables):
+
+```bash
+supabase secrets set GEMINI_API_KEY='replace-with-server-only-key'
+supabase secrets set GEMINI_MODEL='gemini-3.5-flash-lite'
+supabase secrets set ROOMIE_ALLOWED_ORIGINS='http://localhost:5173,https://roomie-peach.vercel.app,https://roomie-*.vercel.app'
+npm run supabase:deploy
+```
+
+Use a model identifier available to the project; `GEMINI_MODEL` is never sent by the browser. The function uses the official `@google/genai` SDK's Interactions API with JSON schema output, an in-memory per-instance limit of 5 requests/minute per user, and a 20-second timeout. Its only fallback is a clearly labelled **AI unavailable** error; it never represents static text as Gemini output.
+
+The Edge Function accepts the exact configured origins plus the narrowly scoped `https://roomie-*.vercel.app` preview hostname pattern. It still requires a user JWT; CORS is not an authorization boundary.
+
+Safe authenticated test request (replace placeholders locally; do not paste a token into source control or chat):
+
+```bash
+curl -X POST "https://YOUR_PROJECT_REF.supabase.co/functions/v1/roommate-insights" \
+  -H "apikey: YOUR_PUBLISHABLE_KEY" \
+  -H "Authorization: Bearer YOUR_SIGNED_IN_USER_JWT" \
+  -H "Content-Type: application/json" \
+  --data '{"targetProfileId":"TARGET_PROFILE_UUID"}'
+```
+
+Example successful body:
+
+```json
+{
+  "source": "gemini",
+  "model": "gemini-3.5-flash-lite",
+  "insights": {
+    "summary": "Their budget ranges may overlap. Their schedules could be useful to discuss before making plans.",
+    "strengths": ["Their move-in timing may align.", "They may share a preference for a quiet home."],
+    "potential_conflicts": ["Guest frequency may be worth discussing."],
+    "conversation_starters": ["How do you prefer to divide chores?", "What does a quiet evening look like to you?", "How often do you expect overnight guests?"]
+  }
+}
+```
 
 ## Known limitations
 
