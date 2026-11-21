@@ -77,9 +77,8 @@ export default function SignIn({ redirectAfterSignIn = true }: { redirectAfterSi
             ← Back
           </button>
         </div>
-        {/* TODO(Person 2): load the signed-in student's profile + candidate profiles from Supabase and
-            pass them as currentUser / profiles. Until then a signed-in user sees "create your profile";
-            signed-out visitors get the fictional demo (requires ROOMIE_DEMO_MODE on the server). */}
+        {/* Signed in: Discover asks /api/match, which verifies this token server-side and loads the
+            student's profile and same-university candidates from Supabase (needs Person 2's profiles table). */}
         {session ? (
           <Discover currentUser={null} accessToken={session.access_token} />
         ) : (

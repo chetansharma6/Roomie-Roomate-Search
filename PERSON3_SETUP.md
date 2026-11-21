@@ -99,7 +99,8 @@ Optional columns that are null or hold an unrecognised value are treated as "not
 ### Steps
 
 1. Apply all migrations in the order documented in `supabase/DATABASE_SETUP.txt`. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_ALLOWED_EMAIL_DOMAINS=usf.edu`, and server-only `GEMINI_API_KEY`; set `ROOMIE_DEMO_MODE=false` and restart the dev server.
-2. In `src/pages/SignIn.tsx` replace the remaining `TODO(Person 2)`: load the signed-in student's row with `rowToProfile` and pass `currentUser`, `profiles` (for instant baseline scores/filtering) and `accessToken`. The UI currently supplies `currentUser={null}` for signed-in discovery, so a successful API test alone will not complete that UI integration.
+2. The shared AuthProvider restores the confirmed user and routes them to `/onboarding` or `/discover` based on profile existence. `StudentDiscover` in `src/pages/AuthenticatedRoutes.tsx` loads RLS-scoped profiles, maps them with `rowToProfile`, and passes `currentUser`, `profiles`, and the session token to Discover. Onboarding saves the matching preferences through `src/lib/profilePersistence.ts`.
+   Discover also supports **server-resolved mode** via `<Discover currentUser={null} accessToken={session.access_token} />`, used by the account screen: it sends only the token/filters and receives sanitized candidate cards in `response.profiles` (no email/phone; bio capped at 600 characters). Both modes retain the existing matching algorithm and respect the same database RLS.
 3. To replace demo data, stop passing/using `DEMO_PROFILES`; nothing else changes.
 4. Caveat: the Supabase code path follows the documented REST APIs but has **not been run against a live project**.
 
