@@ -2,21 +2,25 @@ Roomie database setup — applied to hosted Supabase on 2026-11-21
 
 CONFIRMED HOSTED STATE
 
-All three migrations below were applied successfully to project xcelqqmncgeveawkumje,
-including the additive matching-preferences migration.
-Migration history matches local files. RLS is enabled on all four application
+All four migrations are applied in timestamp order to project xcelqqmncgeveawkumje,
+including 20261121220000_profile_photos.sql. The anon-key read selecting profiles.photo_url
+returns 42501 (RLS) rather than 42703 (missing column). Authenticated insert/update grants
+for photo_url are present; anon column grants are absent. RLS is enabled on all four application
 tables, including the legacy domain table. The hosted transactional policy
-test in supabase/tests/roomie_rls.sql passed and rolled back all fixtures.
+test in supabase/tests/roomie_rls.sql passed and rolled back all synthetic fixtures.
 Signed-out HTTP reads of profiles, roommate_requests and university_domains
 return 401 / 42501. Unsupported-domain signup returns 403 through the enabled
 Before User Created hook. Email confirmation remains enabled; local /signup
-redirect is configured. Gemini secrets were uploaded and roommate-insights
-deployed; a signed-out invocation returns 401.
+redirect settings and SMTP status were not verified. Gemini secrets are configured and
+roommate-insights is deployed with JWT verification; a signed-out invocation returns 401.
+The Codespaces CORS preflight returns 200 with the exact forwarded origin, and the function
+allows the configured Roomie Vercel preview pattern.
 
-Real student mailbox sign-in and a nonempty real-profile /api/match response
-remain unverified. The policy test uses synthetic .invalid identities and
-database roles, not actual mailbox verification. Add the production Vercel
-/signup URL before testing sign-in on that deployment.
+Real student mailbox sign-in, profile persistence, a nonempty real-profile /api/match response,
+and successful authenticated Gemini generation remain unverified. The policy test uses
+synthetic .invalid identities and database roles, not actual mailbox verification. One active
+verified USF profile currently exists; a second distinct confirmed USF account with an active
+profile is needed to exercise two-user discovery and requests.
 
 RUN IN SUPABASE SQL EDITOR
 

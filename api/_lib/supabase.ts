@@ -46,18 +46,25 @@ export function createSupabaseRepository(env: SupabaseEnv, accessToken: string, 
   };
   // Explicit projection prevents future private columns from reaching matching.
   const columns = 'id,university_id,display_name,bio,photo_url,budget_min,budget_max,distance_from_campus_miles,move_in_date,roommates_wanted,housing_status,verified_university_email,monthly_rent,room_type,cleanliness,sleep_schedule,noise_tolerance,study_environment,guest_frequency,pet_preference,smoking,interests,dealbreakers,major,academic_year';
-  async function query(qs: string): Promise<Record<string, unknown>[]> {
-    const res = await fetchImpl(`${env.VITE_SUPABASE_URL}/rest/v1/profiles?${qs}`, { headers });
+  const columnsWithoutPhoto = columns.split(',').filter((column) => column !== 'photo_url').join(',');
+  async function query(filters: string): Promise<Record<string, unknown>[]> {
+    const url = (selectedColumns: string) => `${env.VITE_SUPABASE_URL}/rest/v1/profiles?${filters}&select=${selectedColumns}`;
+    let res = await fetchImpl(url(columns), { headers });
+    if (!res.ok) {
+      const error = await res.clone().json().catch(() => null) as { code?: string; message?: string; details?: string } | null;
+      const missingOptionalPhoto = error?.code === '42703' && /photo_url/i.test(`${error.message ?? ''} ${error.details ?? ''}`);
+      if (missingOptionalPhoto) res = await fetchImpl(url(columnsWithoutPhoto), { headers });
+    }
     if (!res.ok) throw new Error(`profiles query failed (${res.status})`);
     return (await res.json()) as Record<string, unknown>[];
   }
   return {
     async getProfile(id) {
-      const rows = await query(`id=eq.${encodeURIComponent(id)}&is_active=eq.true&select=${columns}&limit=1`);
+      const rows = await query(`id=eq.${encodeURIComponent(id)}&is_active=eq.true&limit=1`);
       return rows[0] ? rowToProfile(rows[0]) : null;
     },
     async listProfiles(universityId) {
-      const rows = await query(`university_id=eq.${encodeURIComponent(universityId)}&is_active=eq.true&select=${columns}&limit=500`);
+      const rows = await query(`university_id=eq.${encodeURIComponent(universityId)}&is_active=eq.true&limit=500`);
       return rows.map(rowToProfile).filter((p): p is NonNullable<typeof p> => p !== null);
     },
   };

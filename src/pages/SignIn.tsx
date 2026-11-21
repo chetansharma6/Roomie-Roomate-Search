@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { authErrorMessage, getAuthClient, MagicLinkRateLimitError, missingAuthSettings, supportedUniversityDomains } from '../lib/auth'
+import { authErrorMessage, MagicLinkRateLimitError, missingAuthSettings, supportedUniversityDomains } from '../lib/auth'
 import { useAuth } from '../hooks/useAuth'
-
-interface RoommateInsightsResponse {
-  insight: string
-}
 
 const allowedEmailDomains = supportedUniversityDomains
 const untimedRetryPause = 5000
@@ -15,9 +11,6 @@ export default function SignIn({ redirectAfterSignIn = true }: { redirectAfterSi
   const navigate = useNavigate()
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
-  const [profile, setProfile] = useState('')
-  const [insight, setInsight] = useState('')
-  const [insightLoading, setInsightLoading] = useState(false)
 
   useEffect(() => {
     if (redirectAfterSignIn && !restoring && user && destination) navigate(destination, { replace: true })
@@ -27,32 +20,9 @@ export default function SignIn({ redirectAfterSignIn = true }: { redirectAfterSi
     setLoading(true)
     try {
       await signOut()
-      setInsight('')
-      setProfile('')
       setMessage('')
     } catch (error) { setMessage(authErrorMessage(error)) }
     finally { setLoading(false) }
-  }
-
-  async function requestInsights(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setMessage('')
-    setInsight('')
-    setInsightLoading(true)
-
-    try {
-      const client = await getAuthClient()
-      const { data, error } = await client.functions.invoke<RoommateInsightsResponse>(
-        'roommate-insights',
-        { body: { profile } },
-      )
-      if (error || !data?.insight) throw error ?? new Error('Missing insight')
-      setInsight(data.insight)
-    } catch {
-      setMessage('Roommate insights are unavailable right now. Please try again.')
-    } finally {
-      setInsightLoading(false)
-    }
   }
 
   return (
@@ -80,41 +50,12 @@ export default function SignIn({ redirectAfterSignIn = true }: { redirectAfterSi
 
             {destination === '/discover' && <p><Link to="/profile">Edit your saved roommate profile</Link></p>}
 
-            <form className="insights-form" onSubmit={requestInsights}>
-              <div>
-                <span className="eyebrow">AI roommate insights</span>
-                <h2>Turn your preferences into better questions</h2>
-                <p className="helper-text">
-                  Describe your budget, schedule, location, and everyday living
-                  preferences. Don’t include names, contact details, or exact addresses.
-                </p>
-              </div>
-              <label htmlFor="profile">Your roommate preferences</label>
-              <textarea
-                id="profile"
-                name="profile"
-                minLength={20}
-                maxLength={4000}
-                placeholder="I’m looking for a place near campus under $900. I study late, prefer a quiet home, and am comfortable with cats…"
-                value={profile}
-                onChange={(event) => setProfile(event.target.value)}
-                required
-              />
-              <div className="form-footer">
-                <span>{profile.length}/4000</span>
-                <button type="submit" disabled={insightLoading}>
-                  {insightLoading ? 'Generating…' : 'Get insights'}
-                </button>
-              </div>
-            </form>
-
-            {insight && (
-              <section className="insight" aria-labelledby="insight-title">
-                <h2 id="insight-title">Your conversation starter</h2>
-                <p>{insight}</p>
-                <small>AI-generated suggestions can be incomplete. Verify important housing details yourself.</small>
-              </section>
-            )}
+            <section className="insight" aria-labelledby="insight-title">
+              <span className="eyebrow">AI roommate insights</span>
+              <h2 id="insight-title">Compare saved profiles, privately</h2>
+              <p>Open a student’s profile in Discover and choose “Generate AI Insights” for structured conversation starters based only on both saved profiles.</p>
+              <Link className="text-link" to="/discover">Open Discover</Link>
+            </section>
           </div>
         ) : (
           <UniversityEmailForm />

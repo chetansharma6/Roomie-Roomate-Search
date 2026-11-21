@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { rowToProfile } from '../lib/profileMapper'
 import { getMyProfile, listProfiles } from '../lib/profiles'
 import { StudentDeck } from '../components/discover/StudentDeck'
+import { RoommateRequestInbox } from '../components/discover/RoommateRequestInbox'
 import type { RoommateProfile } from '../types/profile'
 
 export function StudentDiscover() {
@@ -41,5 +42,9 @@ export function StudentDiscover() {
   if (!profiles) return <main className="shell route-notice" role="status">Loading student profiles…</main>
   const current = currentResult.profile
   if (!current || !session) return <main className="shell route-notice"><h1>Complete your profile</h1><p>An active profile with a move-in date is needed for discovery.</p><Link to="/profile">Edit profile</Link></main>
-  return <><div className="shell student-desktop-chrome"><Link to="/profile">Edit profile</Link> · <Link to="/account">Account and sign out</Link></div><StudentDeck key={current.id} currentUser={current} profiles={profiles} accessToken={session.access_token} /></>
+  return <>
+    <div className="shell student-desktop-chrome"><Link to="/profile">Edit profile</Link> · <Link to="/account">Account and sign out</Link></div>
+    <RoommateRequestInbox profiles={profiles} />
+    <StudentDeck key={current.id} currentUser={current} profiles={profiles} accessToken={session.access_token} />
+  </>
 }

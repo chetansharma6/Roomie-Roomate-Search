@@ -7,6 +7,7 @@ import { SCORE_DISCLAIMER, type MatchResponse, type MatchResult, type RoommatePr
 import { priceLabel } from './labels';
 import { MatchInsights } from './MatchExplanation';
 import { ProfileTags } from './ProfileTags';
+import { AiInsightsError, generateRoommateInsights, type RoommateInsights } from '../../lib/aiInsights';
 
 const formatDate = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 
@@ -18,12 +19,28 @@ export function StudentSwipeCard({ profile, match, ranking, sending, onDecision 
   onDecision: (decision: SwipeDecision) => void;
 }) {
   const [photoFailed, setPhotoFailed] = useState(false);
+  const [aiInsights, setAiInsights] = useState<RoommateInsights>();
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState('');
   const [detailsOpen, setDetailsOpen] = useState(false);
   const details = useRef<HTMLDialogElement>(null);
   const blocked = sending || detailsOpen;
   const { dragging, offset, resetDrag, handlers } = useSwipeGesture(onDecision, blocked);
   const initials = profile.displayName.trim().split(/\s+/).slice(0, 2).map((word) => word[0]).join('');
   const date = new Date(profile.moveInDate);
+
+  async function generateInsights() {
+    if (insightsLoading) return;
+    setInsightsLoading(true);
+    setInsightsError('');
+    try {
+      setAiInsights(await generateRoommateInsights(profile.id));
+    } catch (error) {
+      setInsightsError(error instanceof AiInsightsError ? error.message : 'AI insights are unavailable right now. Please try again.');
+    } finally {
+      setInsightsLoading(false);
+    }
+  }
 
   return (
     <>
@@ -74,6 +91,21 @@ export function StudentSwipeCard({ profile, match, ranking, sending, onDecision 
         </dl>
         <p>{profile.bio || 'No bio provided.'}</p>
         <ProfileTags profile={profile} />
+        <section className="mt-6 border-t border-slate-100 pt-4" aria-labelledby="ai-insights-heading">
+          <h3 id="ai-insights-heading" className="text-sm font-semibold text-slate-800">Roomie AI Insights</h3>
+          <p className="mt-1 text-xs text-slate-500">Uses the two saved roommate profiles to suggest topics to discuss. It does not calculate your match score.</p>
+          {!aiInsights && <button className="button button-primary mt-3" type="button" disabled={insightsLoading} onClick={() => void generateInsights()}>
+            {insightsLoading ? 'Generating AI insights…' : 'Generate AI Insights'}
+          </button>}
+          {insightsError && <p role="alert" className="mt-3 text-sm text-rose-700">{insightsError}</p>}
+          {aiInsights && <div className="mt-3 space-y-4 text-sm text-slate-700">
+            <p>{aiInsights.summary}</p>
+            <InsightList title="Possible strengths" items={aiInsights.strengths} />
+            <InsightList title="Topics to discuss" items={aiInsights.potential_conflicts} />
+            <InsightList title="Conversation starters" items={aiInsights.conversation_starters} />
+            <p className="text-xs text-slate-500">AI-generated possibilities are conversation starters, not guarantees.</p>
+          </div>}
+        </section>
         {!!profile.lifestyleDetails?.priorities.length && (
           <section aria-label="Roommate priorities">
             <h3 className="font-semibold">Roommate priorities</h3>
@@ -87,4 +119,8 @@ export function StudentSwipeCard({ profile, match, ranking, sending, onDecision 
       </dialog>
     </>
   );
+}
+
+function InsightList({ title, items }: { title: string; items: string[] }) {
+  return <div><h4 className="font-medium text-slate-800">{title}</h4><ul className="mt-1 list-disc space-y-1 pl-5">{items.map((item) => <li key={item}>{item}</li>)}</ul></div>;
 }

@@ -14,6 +14,17 @@ values (current_setting('roomie.test_a')::uuid,'a@roomie-test.invalid',now()),
        (current_setting('roomie.test_c')::uuid,'c@roomie-test.invalid',null),
        (current_setting('roomie.test_d')::uuid,'d@roomie-other.invalid',now());
 
+do $$ begin
+  if not has_column_privilege('authenticated','public.profiles','photo_url','INSERT')
+    or not has_column_privilege('authenticated','public.profiles','photo_url','UPDATE') then
+    raise exception 'Authenticated photo_url write grants are missing';
+  end if;
+  if has_column_privilege('anon','public.profiles','photo_url','INSERT')
+    or has_column_privilege('anon','public.profiles','photo_url','UPDATE') then
+    raise exception 'Anonymous photo_url write grants are present';
+  end if;
+end $$;
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', current_setting('roomie.test_a'), true);
 insert into public.profiles(id,display_name,budget_min,budget_max,distance_from_campus_miles,roommates_wanted,housing_status,move_in_date)
@@ -95,6 +106,10 @@ do $$ begin
   begin
     perform 1 from public.profiles;
     raise exception 'Anonymous profile read allowed';
+  exception when insufficient_privilege then null; end;
+  begin
+    update public.profiles set bio='anonymous write' where id=current_setting('roomie.test_a')::uuid;
+    raise exception 'Anonymous profile update allowed';
   exception when insufficient_privilege then null; end;
 end $$;
 reset role;

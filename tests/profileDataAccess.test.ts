@@ -19,7 +19,7 @@ const input: ProfileInput = {
   display_name: ' Student ', budget_min: 500, budget_max: 900,
   distance_from_campus_miles: 3, roommates_wanted: 2, housing_status: 'need_room',
 }
-type Result = { data: unknown; error: { code: string; message?: string } | null }
+type Result = { data: unknown; error: { code: string; message?: string; details?: string } | null }
 let results: Array<Result | Error>
 let calls: Array<{ table: string; method: string; args: unknown[] }>
 
@@ -46,6 +46,33 @@ describe('profile data access', () => {
   it('handles a missing profile and always looks up the authenticated owner', async () => {
     expect(await getMyProfile()).toBeNull()
     expect(calls).toContainEqual({ table: 'profiles', method: 'eq', args: ['id', me] })
+  })
+  it('falls back to profile reads without photo_url when that optional column is not deployed', async () => {
+    results.push(
+      { data: null, error: { code: '42703', message: 'column profiles.photo_url does not exist' } },
+      { data: { id: me, display_name: 'Student', photo_url: undefined }, error: null },
+    )
+    expect(await getMyProfile()).toMatchObject({ id: me })
+    const selections = calls.filter((call) => call.method === 'select').map((call) => String(call.args[0]))
+    expect(selections[0]).toContain('photo_url')
+    expect(selections[1]).not.toContain('photo_url')
+  })
+  it('creates a profile without the optional photo field while its migration is pending', async () => {
+    results.push(
+      { data: null, error: { code: '42703', message: 'column profiles.photo_url does not exist' } },
+      { data: null, error: null },
+      { data: { id: me, display_name: 'Student' }, error: null },
+    )
+    expect(await upsertMyProfile(input)).toMatchObject({ id: me })
+    const inserts = calls.filter((call) => call.method === 'insert')
+    expect(inserts[0]?.args[0]).not.toHaveProperty('photo_url')
+    expect(String(calls.filter((call) => call.method === 'select').at(-1)?.args[0])).not.toContain('photo_url')
+  })
+  it('does not silently discard a requested photo when the photo migration is missing', async () => {
+    results.push({ data: null, error: { code: '42703', message: 'column profiles.photo_url does not exist' } })
+    await expect(upsertMyProfile({ ...input, photo_url: 'https://images.example/photo.jpg' }))
+      .rejects.toThrow('Profile photo saving is unavailable')
+    expect(mocks.from).toHaveBeenCalledTimes(1)
   })
   it('rejects callers without a session before any database request', async () => {
     mocks.getCurrentUser.mockResolvedValue(null)
