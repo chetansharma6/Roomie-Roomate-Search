@@ -104,7 +104,7 @@ export async function analyzeWithGemini(
       timeout,
     ]);
     const outcome = validateGeminiMatches(raw, new Set(limited.map((c) => c.id)));
-    if (!outcome.ok) throw new GeminiFailure('invalid_ai_response', outcome.reason);
+    if (outcome.ok === false) throw new GeminiFailure('invalid_ai_response', outcome.reason);
     return outcome.matches;
   } catch (err) {
     throw classify(err, timedOut);

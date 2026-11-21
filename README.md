@@ -179,6 +179,8 @@ For local Edge Function development, copy `supabase/functions/.env.example` to t
 
 Use one Vercel project for the Vite frontend and the Node.js `/api/match` function. Supabase continues to provide PostgreSQL, Auth, and the `roommate-insights` Edge Function. A separate Render server is unnecessary for this architecture.
 
+Production: https://roomie-peach.vercel.app. The Vercel project is `team-roomie/roomie`; production environment variables are configured, and Supabase allows `https://roomie-peach.vercel.app/signup` alongside localhost. Deploy an updated main branch with `npx vercel deploy --prod --yes` after logging into the project. GitHub-triggered deployments additionally require a successful repository connection in Vercel.
+
 The checked-in `vercel.json` builds with `npm run build`, serves `dist`, and rewrites the application routes to the SPA without rewriting `/api/match`. `.vercelignore` excludes local environment files from uploaded source.
 
 Configure these Vercel environment variables for Production (and Preview if needed): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_ALLOWED_EMAIL_DOMAINS=usf.edu`, server-only `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3.5-flash-lite`, and `ROOMIE_DEMO_MODE=false`. Matching uses the student's JWT and does not require the Supabase secret key. Redeploy after changing browser variables because Vite embeds them at build time.
