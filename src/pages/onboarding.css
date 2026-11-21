@@ -1,0 +1,104 @@
+.onboarding-quiz {
+  --quiz-ink: #17372a;
+  --quiz-paper: #f6eee0;
+  --quiz-card: #fffaf0;
+  --quiz-gold: #a57b37;
+  min-height: calc(100dvh - 4rem);
+  padding: clamp(1rem, 4vw, 2.75rem) 1rem 0;
+  background: radial-gradient(ellipse at 50% 10%, #fff9eb, transparent 80%), var(--quiz-paper);
+  color: var(--quiz-ink);
+}
+
+.quiz-shell { display: flex; flex-direction: column; width: min(100%, 38rem); min-height: inherit; margin-inline: auto; }
+.quiz-header { display: flex; align-items: start; justify-content: space-between; gap: .75rem; }
+.quiz-header h1 { max-width: 14ch; font-size: clamp(1.75rem, 7vw, 3.1rem); font-weight: 800; line-height: 1.05; letter-spacing: -.055em; }
+.quiz-sign-out { flex: 0 0 auto; min-height: 2.75rem; padding-inline: .35rem; text-decoration: underline; text-underline-offset: .22em; font-size: .8rem; }
+.quiz-progress { display: grid; gap: .45rem; margin-block: 1.25rem .2rem; font-size: .8rem; font-weight: 750; }
+.quiz-progress progress { appearance: none; display: block; width: 100%; height: .45rem; border: 0; border-radius: 1rem; overflow: hidden; background: #e7ddc7; }
+.quiz-progress progress::-webkit-progress-bar { background: #e7ddc7; }
+.quiz-progress progress::-webkit-progress-value { background: var(--quiz-gold); border-radius: 1rem; }
+.quiz-progress progress::-moz-progress-bar { background: var(--quiz-gold); border-radius: 1rem; }
+.quiz-screen { padding-block: 1.15rem .8rem; }
+.quiz-screen h2 { font-size: clamp(1.3rem, 4.9vw, 2rem); font-weight: 800; line-height: 1.18; letter-spacing: -.035em; }
+.quiz-screen h2:focus { outline: none; }
+.quiz-options { display: grid; min-width: 0; gap: .55rem; margin-top: .9rem; }
+.quiz-option {
+  position: relative; display: grid; grid-template-columns: 1.5rem minmax(0, 1fr) 1.15rem; align-items: center;
+  gap: .65rem; min-height: 3.2rem; padding: .65rem .85rem; border: 1px solid #d4c5a8;
+  border-radius: .8rem; background: var(--quiz-card); font-size: .94rem; font-weight: 720; cursor: pointer;
+}
+.quiz-option:hover { border-color: var(--quiz-gold); }
+.quiz-option input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: inherit; }
+.quiz-option:has(input:focus-visible) { outline: 3px solid var(--quiz-ink); outline-offset: 2px; }
+.quiz-option:has(input:checked) { background: #f0dfad; border-color: #a17b3e; }
+.quiz-option:has(input:disabled) { opacity: .66; cursor: default; }
+.quiz-option-check { visibility: hidden; }
+.quiz-option:has(input:checked) .quiz-option-check { visibility: visible; }
+.quiz-priority-count { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .25rem .65rem; font-size: .82rem; }
+.quiz-priority-count strong { white-space: nowrap; }
+
+.quiz-thermostat {
+  width: 6.4rem; height: 6.4rem; margin: 0 auto .3rem; padding: .4rem; border-radius: 50%;
+  background: conic-gradient(from -120deg, #72928b, #c8a965 43%, #b98554 66%, #dfd3b4 66%);
+  box-shadow: 0 .28rem .75rem #17372a1c;
+}
+.quiz-dial {
+  display: grid; justify-items: center; align-content: center; gap: .1rem; width: 100%; height: 100%; border-radius: inherit;
+  background: var(--quiz-card); border: 1px solid #fffdf6;
+}
+.quiz-dial strong { font: 800 1.75rem / 1 var(--font-display); }
+.quiz-dial svg { color: #42614e; }
+
+.onboarding-quiz .profile-fields { grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); }
+.onboarding-quiz .profile-form :is(input, select, textarea) { border-color: #bfad8c; background: var(--quiz-card); }
+
+.quiz-controls {
+  position: sticky; z-index: 1; bottom: 0; isolation: isolate; display: flex; justify-content: space-between; gap: .75rem;
+  margin-top: auto; padding: .75rem 0 max(1rem, env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, var(--quiz-paper) 24%);
+}
+.quiz-controls::before, .quiz-controls::after {
+  position: absolute; z-index: -1; bottom: 0; width: min(8rem, 34%); height: 2.5rem; content: ''; pointer-events: none;
+  background: #537c4c24;
+  clip-path: polygon(0 100%, 0 40%, 9% 77%, 14% 20%, 23% 76%, 29% 45%, 38% 83%, 44% 32%, 53% 81%, 60% 50%, 69% 87%, 77% 62%, 92% 92%, 100% 100%);
+}
+.quiz-controls::before { left: 0; }
+.quiz-controls::after { right: 0; transform: scaleX(-1); }
+.quiz-controls .button { min-height: 2.75rem; border-radius: .75rem; }
+.quiz-back { border-color: #ac9d7e; color: var(--quiz-ink); background: var(--quiz-card); }
+.quiz-continue { color: #fffaf0; background: #234d38; }
+.quiz-continue:hover:not(:disabled) { background: #17372a; }
+.onboarding-quiz button:disabled { opacity: .56; cursor: default; }
+
+.quiz-recap { display: grid; margin-top: .9rem; border-top: 1px solid #dbcdb1; }
+.quiz-recap > div {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: .65rem;
+  align-items: center; padding-block: .5rem; border-bottom: 1px solid #dbcdb1;
+}
+.quiz-recap dt { font-size: .83rem; font-weight: 800; }
+.quiz-recap dd { grid-column: 1; font-size: .9rem; overflow-wrap: anywhere; }
+.quiz-recap button { grid-area: 1 / 2 / span 2; min-height: 2.75rem; padding-inline: .55rem; font-weight: 800; text-decoration: underline; }
+.quiz-recap-tags { margin-top: 1rem; }
+.quiz-recap-tags h3 { font-size: .88rem; font-weight: 800; }
+.quiz-error { margin-top: .8rem; padding: .65rem .8rem; border-radius: .55rem; background: #f5dfd8; color: #7c2f27; font-size: .86rem; }
+
+.quiz-options:has(:is(.quiz-thermostat, .quiz-priority-count)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.quiz-thermostat, .quiz-priority-count { grid-column: 1 / -1; }
+@media (max-width: 420px) {
+  .quiz-options:has(:is(.quiz-thermostat, .quiz-priority-count)) .quiz-option {
+    grid-template-columns: 1.25rem minmax(0, 1fr); gap: .45rem; padding: .6rem .55rem; font-size: .82rem;
+  }
+  .quiz-options:has(:is(.quiz-thermostat, .quiz-priority-count)) .quiz-option-check { grid-area: 1 / 1; }
+  .quiz-options:has(:is(.quiz-thermostat, .quiz-priority-count)) .quiz-option:has(input:checked) > svg:not(.quiz-option-check) {
+    visibility: hidden;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .quiz-screen { animation: quiz-screen-enter 160ms ease-out; }
+  @keyframes quiz-screen-enter {
+    from { opacity: .5; transform: translateY(4px); }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-quiz .button { transition: none; }
+}

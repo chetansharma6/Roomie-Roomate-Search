@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { closeDiscoverDetails } from './closeDiscoverDetails';
 import { CalendarDays, ChevronUp, Heart, MapPin, Wallet, X } from 'lucide-react';
+import { priorityLabels } from '../../lib/lifestyleDetails';
 import { useSwipeGesture, type SwipeDecision } from '../../hooks/useSwipeGesture';
 import { SCORE_DISCLAIMER, type MatchResponse, type MatchResult, type RoommateProfile } from '../../types/profile';
 import { priceLabel } from './labels';
@@ -105,6 +106,14 @@ export function StudentSwipeCard({ profile, match, ranking, sending, onDecision 
             <p className="text-xs text-slate-500">AI-generated possibilities are conversation starters, not guarantees.</p>
           </div>}
         </section>
+        {!!profile.lifestyleDetails?.priorities.length && (
+          <section aria-label="Roommate priorities">
+            <h3 className="font-semibold">Roommate priorities</h3>
+            <ul className="student-tags">{profile.lifestyleDetails.priorities.map((priority) => (
+              <li key={priority}>{priorityLabels[priority]}</li>
+            ))}</ul>
+          </section>
+        )}
         {match && <MatchInsights match={match} source={ranking?.source ?? 'fallback'} model={ranking?.model}
           disclaimer={ranking?.disclaimer ?? SCORE_DISCLAIMER} />}
       </dialog>

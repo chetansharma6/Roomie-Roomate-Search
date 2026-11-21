@@ -5,7 +5,8 @@ import { DemoDiscover } from './demo/DemoDiscover';
 import { Landing } from './pages/Landing';
 import Discover from './pages/Discover';
 import { useAuth } from './hooks/useAuth';
-import { Onboarding, StudentDiscover } from './pages/AuthenticatedRoutes';
+import { StudentDiscover } from './pages/AuthenticatedRoutes';
+import { Onboarding } from './pages/Onboarding';
 import { ProfileEditor } from './pages/ProfileEditor';
 
 const SignIn = lazy(() => import('./pages/SignIn'));

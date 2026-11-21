@@ -1,3 +1,5 @@
+import type { LifestyleDetails } from '../lib/lifestyleDetails.js';
+
 /**
  * Shared roommate profile contract (Person 3 <-> Person 2 database).
  *
@@ -59,6 +61,7 @@ export interface RoommateProfile {
 
   // --- display-only (never scored, never sent to Gemini) ---
   photoUrl?: string;
+  lifestyleDetails?: LifestyleDetails;
   major?: string;
   academicYear?: AcademicYear;
 }
