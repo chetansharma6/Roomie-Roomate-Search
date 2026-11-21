@@ -2,7 +2,7 @@
 
 ## Current status
 
-Roomie's authenticated profile path uses Supabase Auth, PostgreSQL RLS, and the caller's JWT. The Vercel matching function does not use a service-role key. All four migrations, including `20261121220000_profile_photos.sql`, are applied to hosted project `xcelqqmncgeveawkumje` in timestamp order. The hosted `supabase/tests/roomie_rls.sql` smoke test passed and rolled back its synthetic fixtures. An anon-key read selecting `photo_url` returns `42501` (RLS) rather than `42703` (missing column); authenticated photo insert/update column grants are present, while anon grants are absent.
+Roomie's authenticated profile path uses Supabase Auth, PostgreSQL RLS, and the caller's JWT. The Vercel matching function does not use a service-role key. All five migrations, including `20261121220000_profile_photos.sql` and `20261121230000_profile_lifestyle_details.sql`, are applied to hosted project `xcelqqmncgeveawkumje` in timestamp order. The hosted `supabase/tests/roomie_rls.sql` smoke test passed and rolled back its synthetic fixtures. An anon-key read selecting `photo_url` returns `42501` (RLS) rather than `42703` (missing column); authenticated photo insert/update column grants are present, while anon grants are absent. The lifestyle-details column and validation constraint exist; authenticated insert/update grants are present and anon grants are absent.
 
 Mailbox delivery, a complete real-student sign-in/profile/sign-out/sign-in walkthrough, and a nonempty production Gemini match using stored candidates still require manual verification. A confirmed university mailbox proves control of that mailbox, not current enrollment.
 
@@ -15,7 +15,7 @@ Apply migrations in timestamp order with `npm run supabase:db:push`:
 3. `supabase/migrations/20261121210000_expand_profile_preferences.sql`
 4. `supabase/migrations/20261121220000_profile_photos.sql`
 
-The fourth migration adds optional `photo_url` storage and its authenticated column grants. The compatibility fallback remains for older local/test schemas.
+The fourth migration adds optional `photo_url` storage and its authenticated column grants. The fifth adds the validated optional `lifestyle_details` JSONB column and authenticated-only write grants. Compatibility fallbacks remain for older local/test schemas.
 
 `public.profiles.id` is both the primary key and a foreign key to `auth.users(id)`, so one account can have at most one profile. Required matching columns are `id`, `university_id`, `display_name`, `budget_min`, `budget_max`, `distance_from_campus_miles`, `move_in_date`, `roommates_wanted`, and `housing_status`. The database stores `have_room` / `need_room`; `rowToProfile` maps those to Person 3's canonical `has_room` / `needs_room` values.
 
