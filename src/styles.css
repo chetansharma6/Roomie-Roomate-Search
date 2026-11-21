@@ -286,6 +286,7 @@ button { cursor: pointer; }
   .nav-action-short { display: inline; }
   .navbar .nav-action { padding-inline: .55rem; }
   .nav-action > svg { display: none; }
+  .nav-action-signed-in { display: none; }
   .hero { grid-template-columns: 1fr; }
   .hero h1 { font-size: clamp(2.55rem, 8.8vw, 4.5rem); }
   .hero-visual img { aspect-ratio: 1.55; }

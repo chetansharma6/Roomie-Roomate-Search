@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import type { SwipeDecision } from '../../hooks/useSwipeGesture';
 import { filterCandidates } from '../../lib/filters';
 import { describeFallback, findMatches, MatchClientError } from '../../lib/matchClient';
-import { DataAccessError } from '../../lib/dataAccess';
-import { sendRoommateRequest } from '../../lib/roommateRequests';
+import { expressInterest } from '../../lib/messaging';
+import { MatchDialog } from '../messages/MatchDialog';
 import type { MatchResponse, ProfileFilters, RoommateProfile } from '../../types/profile';
 import { FilterPanel } from './FilterPanel';
 import { MatchingLoadingState } from './MatchingLoadingState';
@@ -27,6 +27,7 @@ export function StudentDeck({ currentUser, profiles, accessToken }: {
   const [sending, setSending] = useState(false);
   const [interestError, setInterestError] = useState('');
   const [notice, setNotice] = useState('');
+  const [matched, setMatched] = useState<{ name: string; conversationId: string }>();
   const interestInFlight = useRef(false);
   const stage = useRef<HTMLElement>(null);
 
@@ -72,12 +73,12 @@ export function StudentDeck({ currentUser, profiles, accessToken }: {
       interestInFlight.current = true;
       setSending(true);
       try {
-        await sendRoommateRequest(profile.id);
-      } catch (error) {
-        if (!(error instanceof DataAccessError && error.code === 'duplicate')) {
-          setInterestError('Could not send your interest. Please try again.');
-          return;
-        }
+        // Atomic server-side: records interest and creates the match only if the other student already said yes.
+        const result = await expressInterest(profile.id);
+        if (result.matched_now && result.conversation_id) setMatched({ name: profile.displayName, conversationId: result.conversation_id });
+      } catch {
+        setInterestError('Could not send your interest. Please try again.');
+        return;
       } finally {
         interestInFlight.current = false;
         setSending(false);
@@ -133,6 +134,7 @@ export function StudentDeck({ currentUser, profiles, accessToken }: {
           {interestError && <p className="student-interest-error" role="alert">{interestError}</p>}
         </section>
       </div>
+      {matched && <MatchDialog name={matched.name} conversationId={matched.conversationId} onClose={() => setMatched(undefined)} />}
     </main>
   );
 }
