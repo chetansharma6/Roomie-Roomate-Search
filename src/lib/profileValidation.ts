@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { parseProfilePhotoUrl } from './profileMapper'
+import { lifestyleDetailsSchema } from './lifestyleDetails'
 import { DataAccessError } from './dataAccess'
 
 const amount = z.number().int().min(0).max(100_000)
@@ -14,6 +15,7 @@ export const profileInputSchema = z.object({
   photo_url: z.string().trim().max(2048)
     .refine((url) => Boolean(parseProfilePhotoUrl(url)), 'Enter a valid HTTPS photo URL.')
     .nullable().optional(),
+  lifestyle_details: lifestyleDetailsSchema.nullable().optional(),
   budget_min: amount,
   budget_max: amount,
   distance_from_campus_miles: z.number().min(0).max(1000),
