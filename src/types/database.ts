@@ -1,0 +1,71 @@
+/** Existing camelCase application contract; keep Person 3's matching types canonical. */
+export type { RoommateProfile } from './profile';
+import type {
+  AcademicYear,
+  Cleanliness,
+  Dealbreaker,
+  GuestFrequency,
+  PetPreference,
+  RoomType,
+  SleepSchedule,
+  SmokingPreference,
+  StudyEnvironment,
+  NoiseTolerance,
+} from './profile';
+
+/** Raw public.profiles row. rowToProfile maps completed rows for discovery.
+ * Nullable move_in_date means a draft is not yet eligible for that mapper.
+ */
+export interface ProfileRow {
+  id: string;
+  display_name: string;
+  university: string;
+  university_id: string;
+  major: string | null;
+  academic_year: AcademicYear | null;
+  bio: string | null;
+  budget_min: number;
+  budget_max: number;
+  distance_from_campus_miles: number;
+  roommates_wanted: number;
+  move_in_date: string | null;
+  cleanliness: Cleanliness | null;
+  sleep_schedule: SleepSchedule | null;
+  noise_tolerance: NoiseTolerance | null;
+  pet_preference: PetPreference | null;
+  monthly_rent: number | null;
+  room_type: RoomType | null;
+  study_environment: StudyEnvironment | null;
+  guest_frequency: GuestFrequency | null;
+  smoking: SmokingPreference | null;
+  dealbreakers: Dealbreaker[];
+  housing_status: 'have_room' | 'need_room';
+  interests: string[];
+  is_active: boolean;
+  verified_university_email: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ProfileWrite = Pick<ProfileRow,
+  'display_name' | 'major' | 'academic_year' | 'bio' | 'budget_min' | 'budget_max' |
+  'distance_from_campus_miles' | 'roommates_wanted' | 'move_in_date' | 'cleanliness' |
+  'sleep_schedule' | 'noise_tolerance' | 'pet_preference' | 'monthly_rent' | 'room_type' |
+  'study_environment' | 'guest_frequency' | 'smoking' | 'dealbreakers' |
+  'housing_status' | 'interests' | 'is_active'
+>;
+
+export interface RoommateRequestRow {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  status: 'pending' | 'accepted' | 'declined';
+  created_at: string;
+}
+
+export interface UniversityDomainRow {
+  university_name: string;
+  university_id: string;
+  domain: string;
+  is_active: boolean;
+}

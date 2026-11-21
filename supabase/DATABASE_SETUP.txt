@@ -1,0 +1,149 @@
+Roomie database setup — applied to hosted Supabase on 2026-11-21
+
+CONFIRMED HOSTED STATE
+
+All three migrations below were applied successfully to project xcelqqmncgeveawkumje,
+including the additive matching-preferences migration.
+Migration history matches local files. RLS is enabled on all four application
+tables, including the legacy domain table. The hosted transactional policy
+test in supabase/tests/roomie_rls.sql passed and rolled back all fixtures.
+Signed-out HTTP reads of profiles, roommate_requests and university_domains
+return 401 / 42501. Unsupported-domain signup returns 403 through the enabled
+Before User Created hook. Email confirmation remains enabled; local /signup
+redirect is configured. Gemini secrets were uploaded and roommate-insights
+deployed; a signed-out invocation returns 401.
+
+Real student mailbox sign-in and a nonempty real-profile /api/match response
+remain unverified. The policy test uses synthetic .invalid identities and
+database roles, not actual mailbox verification. Add the production Vercel
+/signup URL before testing sign-in on that deployment.
+
+RUN IN SUPABASE SQL EDITOR
+
+These are reproduction instructions for a fresh project. Do not reapply the
+already recorded migrations to Roomie.
+
+1. Open the intended Supabase project, then SQL Editor > New query.
+2. If not already applied, paste and run:
+   migrations/20261121180000_restrict_signup_email_domains.sql
+3. In a new query, paste the COMPLETE contents of:
+   migrations/20261121200000_roomie_profiles_requests.sql
+   Run once as the project database administrator. It uses BEGIN/COMMIT.
+   If it fails, ROLLBACK before retrying. Report the error; do not drop existing
+   tables or disable RLS. Existing profiles/request/domain tables are deliberately
+   not overwritten; this migration expects those three tables to be absent.
+4. In a new query, run the additive migration:
+   migrations/20261121210000_expand_profile_preferences.sql
+   It adds the optional preference columns read by profileMapper and grants
+   authenticated users write access only to those columns.
+5. Under Authentication > Hooks, enable Before User Created with the Postgres
+   function public.hook_restrict_signup_by_email_domain. Keep email confirmation
+   enabled. Configure SMTP and /signup redirects as described in the main README.
+6. Set VITE_ALLOWED_EMAIL_DOMAINS=usf.edu locally and on the frontend deployment.
+7. Run the checks below using real signed-in student sessions. SQL Editor runs
+   with administrative permissions and by itself does NOT demonstrate RLS.
+
+If applying manually now and using CLI migrations later, reconcile the CLI
+migration history first; do not blindly reapply a migration already run manually.
+
+FIELD CONTRACT / TEAM COMPATIBILITY
+
+Requested field             Stored column / existing matching contract
+maximum_distance_miles      distance_from_campus_miles
+preferred_roommate_count   roommates_wanted
+noise_preference           noise_tolerance
+university                 university (display name), university_id (e.g. usf)
+housing_status             have_room / need_room; mapper produces has_room / needs_room
+
+No duplicate columns with competing meanings are introduced. The distance column
+retains the existing discovery contract; if the product needs separate preferred
+maximum and actual listing distances later, add distinct fields deliberately.
+
+src/types/profile.ts remains the canonical shared RoommateProfile interface.
+src/types/database.ts re-exports it and adds ProfileRow, ProfileWrite,
+RoommateRequestRow and UniversityDomainRow for raw database records.
+The frontend-only src/types/RoommateProfile.ts demo type is preserved.
+
+move_in_date may be NULL while a profile is a draft. The existing rowToProfile
+mapper skips incomplete profiles until a move-in date is supplied. No fake date
+is inserted. The additive preferences migration provides monthly_rent, room_type,
+study_environment, guest_frequency, smoking and dealbreakers; all are optional.
+
+The database derives university, university_id and verified_university_email
+from auth.users and active university_domains. Client writes must omit these
+columns and created_at/updated_at. Insert your own id plus writable fields;
+updates may use only the ProfileWrite fields. This proves mailbox ownership
+for an approved domain, not enrollment. Profile rows contain no email column.
+
+RLS POLICY EXPLANATIONS
+
+active_domains_read: authenticated users see active supported domains only;
+students have no domain write privileges. Administrators manage the allowlist.
+
+profiles_read: confirmed, supported university users see their own profile
+(including inactive) and active profiles at the same university. Candidate
+confirmation/domain status is checked live too. Anonymous users have no grant.
+
+profiles_insert_own: the authenticated user can insert only their own id and
+only with a confirmed supported email. A trigger derives verification and school.
+
+profiles_update_own: only the owner with a currently verified supported email
+can update. Column grants exclude identity, university, verification and timestamps.
+The trigger guards ownership and maintains timestamps. No client delete policy.
+
+requests_participants_read: only a sender or receiver who currently has a
+confirmed supported university email can read a request.
+
+requests_send_own: sender must be auth.uid(), status must start pending, and
+both active profiles must be visible through profile RLS (same university).
+Self-requests fail a CHECK; an unordered unique index prevents repeat requests
+in either direction, even after a final decision.
+
+requests_receiver_respond: only the receiver may update a pending request to
+accepted or declined. Column grants allow status only. A trigger additionally
+prevents identity/ownership/creation-time edits and changes to final decisions.
+No client delete policy or cancellation/resend workflow is provided.
+
+All application tables have RLS enabled. The legacy allowed_email_domains table
+is retained, locked to clients and no longer used by the signup hook. The hook
+now uses university_domains, avoiding two sources of authorization truth.
+Private security-definer helpers use an empty search_path and never return email.
+
+SERVER ADAPTER
+
+api/_lib/supabase.ts uses the student's JWT and publishable key, so database
+reads respect these policies. Auth rejects unconfirmed emails; the database
+enforces approved domains and same-university access. Reads explicitly select
+matching fields and require active profiles. No secret key is needed for this
+adapter. Do not test RLS using a secret/service key, which bypasses RLS.
+
+DATABASE TEST CHECKLIST (use fictional test data)
+
+[ ] Confirm profiles, roommate_requests, university_domains all show RLS enabled.
+[ ] Signed-out publishable-key query cannot read profiles or requests.
+[ ] Unconfirmed email and confirmed unsupported-domain users cannot read/create profiles.
+[ ] Confirmed A and B at usf.edu can insert their own profiles and see each other.
+[ ] A cannot insert as B or edit B's profile; attempted update affects zero rows.
+[ ] Attempt to write verified_university_email/university_id/timestamps fails.
+[ ] Invalid budgets, status values, negative distances and roommate counts fail.
+[ ] NULL move-in date is allowed in storage; discovery mapper skips that draft.
+[ ] Inactive B is hidden from A while B can still read/edit their own profile.
+[ ] A cannot see profiles at another supported university (test a second test domain).
+[ ] A can send B a pending request; impersonated sender and self-request fail.
+[ ] Duplicate A->B AND reverse B->A requests fail the unique index.
+[ ] Sender and receiver can read; verified unrelated C cannot read the request.
+[ ] A cannot accept/decline; B can respond once. Affected rows must be checked.
+[ ] B cannot change sender_id, receiver_id, id or created_at.
+[ ] Accepted/declined request cannot be reopened, edited or resent.
+[ ] Signup hook accepts exact usf.edu; rejects arbitrary .edu and unlisted subdomains.
+[ ] Disabling a domain immediately removes profile/request access for its users.
+[ ] Profile queries return no email addresses; no auth.users grants exist for clients.
+
+LOCAL VERIFICATION
+
+Both migrations executed in a temporary PGlite PostgreSQL runtime with stubbed
+Supabase auth roles/users/auth.uid(). Twenty behavioral checks passed, covering
+ownership, verified access, request transitions, duplicates and domain revocation.
+TypeScript typecheck also passed. A subsequent hosted SQL policy smoke test
+passed (see confirmed hosted state above). Run the remaining mailbox and
+real-profile matching checks before claiming end-to-end student integration.

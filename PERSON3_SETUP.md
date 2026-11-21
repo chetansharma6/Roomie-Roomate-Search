@@ -31,7 +31,7 @@ See `.env.example`. Put real values in `.env.local` (git-ignored).
 | `GEMINI_API_KEY` | server only | Never use a `VITE_` prefix |
 | `GEMINI_MODEL` | server | Default `gemini-3.5-flash-lite` |
 | `ROOMIE_DEMO_MODE` | server | `true` enables the fictional unauthenticated student. **Ignored when `VERCEL_ENV=production`** (or `NODE_ENV=production` off Vercel) |
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` | server (the `VITE_` ones are shared with the browser client) | Real auth + profile loading when demo mode is off. Names match the team's `.env.example` |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` | shared browser/server configuration | Real auth + profile loading when demo mode is off. Database reads use the caller's JWT and respect RLS; no secret key is needed for matching |
 
 ## Local development
 
@@ -53,7 +53,11 @@ Create one in [Google AI Studio](https://aistudio.google.com/apikey), put it in 
 
 ## Person 2 — connecting Supabase
 
-The repo contains **no** Person 2 schema, so the table below is the *contract the matcher expects*, implemented in `src/lib/profileMapper.ts` (`rowToProfile`). Either make your `profiles` table match it, or edit only `rowToProfile` (the adapter); do not change the matching algorithm. Rows missing a required column are skipped.
+Person 2's schema and RLS are in `supabase/migrations/20261121200000_roomie_profiles_requests.sql`, with SQL Editor instructions and the database test checklist in `supabase/DATABASE_SETUP.txt`. The auth and profile migrations were successfully applied to hosted project `xcelqqmncgeveawkumje` on 2026-11-21. The additive matching-preference migration is in `supabase/migrations/20261121210000_expand_profile_preferences.sql`. All tables have RLS enabled; hosted transactional policy checks passed and signed-out Data API requests were denied. **Matching through a real student session is still unverified.**
+
+The profile migrations provide the columns consumed by `src/lib/profileMapper.ts` (`rowToProfile`), including optional `monthly_rent`, `room_type`, `study_environment`, `guest_frequency`, `smoking`, and `dealbreakers`. `move_in_date` is nullable for drafts in storage, but required by the mapper for discovery. `university`, `university_id`, and `verified_university_email` are database-derived. `is_active` controls discoverability.
+
+If a deployed schema uses different names, update the mapper **and** the explicit column projection/query filters in `api/_lib/supabase.ts` as necessary. A mapper change alone cannot fix PostgREST selecting or filtering a nonexistent column.
 
 ### Expected `public.profiles` columns
 
@@ -87,17 +91,30 @@ Optional columns that are null or hold an unrecognised value are treated as "not
 ### How it flows
 
 1. Student signs in (Supabase Auth). The client sends `Authorization: Bearer <session.access_token>` to `POST /api/match`.
-2. The server verifies the token with Supabase Auth (`/auth/v1/user`), takes the user id **from the token** (never the request body), loads that profile, then lists profiles with the same `university_id` (service key, server only). Cross-university candidates are impossible.
+2. The server verifies the token and email confirmation with Supabase Auth (`/auth/v1/user`), takes the user id **from the token** (never the request body), loads that active profile, then lists active profiles with the same `university_id`. All database calls use the publishable key and caller's JWT, so the applied RLS policies enforce verified access and university isolation.
 3. Hard filters run (budget, distance, housing status, move-in window, dealbreakers, optional `verifiedOnly`), then up to 10 candidates go to Gemini.
 4. **Privacy:** the browser never needs the service key. If you pass `profiles` to `<Discover />` from the client, load them with RLS so students only see same-university rows, and never include email/phone columns.
 5. Recommended RLS: authenticated users may `select` profiles where `university_id` equals their own; users may `update` only their own row; only the server may write `verified_university_email`.
 
 ### Steps
 
-1. Create/align the table above; set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (server only), `GEMINI_API_KEY`; set `ROOMIE_DEMO_MODE=false`.
-2. **Signed-in (server-resolved) mode, already wired:** render `<Discover currentUser={null} accessToken={session.access_token} />` (as `SignIn.tsx` does). Discover posts only the token and filters to `/api/match`; the server loads the student and same-university candidates and returns sanitized candidate cards in `response.profiles` (no email/phone; bio capped at 600 chars). Discover runs automatically on mount and whenever filters change, shows "Create your profile" on a 404, and has no client-side baseline in this mode (the server's fallback ranking is used instead). Passing `currentUser` + `profiles` still works for the client-filtered mode.
+1. Apply all migrations in the order documented in `supabase/DATABASE_SETUP.txt`. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_ALLOWED_EMAIL_DOMAINS=usf.edu`, and server-only `GEMINI_API_KEY`; set `ROOMIE_DEMO_MODE=false` and restart the dev server.
+2. The shared AuthProvider restores the confirmed user and routes them to `/onboarding` or `/discover` based on profile existence. `StudentDiscover` in `src/pages/AuthenticatedRoutes.tsx` loads RLS-scoped profiles, maps them with `rowToProfile`, and passes `currentUser`, `profiles`, and the session token to Discover. Onboarding saves the matching preferences through `src/lib/profilePersistence.ts`.
+   Discover also supports **server-resolved mode** via `<Discover currentUser={null} accessToken={session.access_token} />`, used by the account screen: it sends only the token/filters and receives sanitized candidate cards in `response.profiles` (no email/phone; bio capped at 600 characters). Both modes retain the existing matching algorithm and respect the same database RLS.
 3. To replace demo data, stop passing/using `DEMO_PROFILES`; nothing else changes.
 4. Caveat: the Supabase code path follows the documented REST APIs but has **not been run against a live project**.
+
+### Real Supabase acceptance test (pending)
+
+1. Confirm the migration succeeded in the hosted project and enable the signup hook. Run the database checklist with user sessions; the SQL Editor's administrator role bypasses RLS.
+2. Sign in using two actual supported university mailboxes (A and B), confirm each email, and create an active profile for each account. Supply valid budgets, distance, roommate count, housing status, and a move-in date. Choose mutually compatible hard constraints so a nonempty result is expected. Never set the verified flag from the client.
+3. Run the app with `ROOMIE_DEMO_MODE=false`. In an authenticated API client, call `POST /api/match` with JSON `{ "filters": {} }` and `Authorization: Bearer <A's session.access_token>`. Keep the token private and do not paste it in issues, screenshots, logs, or chat.
+4. Require HTTP 200 with a nonempty `matches` array containing B's real profile UUID. Confirm A is excluded and all result UUIDs correspond to authorized, active database profiles. A 200 with no matches does not validate the full scenario.
+5. `source: "gemini"` demonstrates AI analysis of those records. `source: "fallback"` with real records demonstrates database matching only; inspect `fallbackReason` before claiming the AI path works. A Gemini smoke test with fictional profiles does not validate Supabase.
+6. Verify missing/invalid tokens receive 401; unconfirmed or unsupported accounts cannot retrieve profiles; inactive and other-university profiles are excluded. Check sender/receiver privacy separately using the database checklist.
+7. Record the test date, migration version, HTTP status, result count, and response source without storing emails, tokens, or student profile contents. Only mark live integration verified after those checks succeed.
+
+Current evidence: automated adapter tests, temporary local PostgreSQL checks, hosted transactional policy checks and signed-out HTTP checks pass. The migrations and signup hook are applied. Real mailbox sign-in, real student profile creation, and a real `/api/match` response remain unverified. `supabase/tests/roomie_rls.sql` is a repeatable hosted policy smoke test that rolls back synthetic fixtures; run with `npx supabase db query --remote --file supabase/tests/roomie_rls.sql --yes`.
 
 ## Person 1 — using the discovery UI
 
@@ -154,3 +171,27 @@ Import the repo; add `GEMINI_API_KEY` (and Supabase vars) in project settings. `
 - Gemini analyses the top 10 candidates by baseline score within a 20-second model timeout; the browser waits up to 25 seconds and the Vercel Function is capped at 30 seconds. In AI mode only those candidates are shown.
 - The profile fields for lifestyle and `monthly_rent` are my proposal; Person 2 must confirm the schema.
 - No pagination, saved matches, or messaging.
+
+## QA notes (feature/gemini-qa)
+
+### Scoring changes
+- Direct clashes (smoke-free vs smoker, pet-free vs pet owner) cap the baseline score at 50; a severe clash in cleanliness, sleep, noise or guests caps it at 70 (`CONFLICT_CAPS` in `src/lib/scoring.ts`). Previously such pairs scored 86-94.
+- Scores with little shared data (< 50% of weight covered) are pulled toward 50, so a near-empty profile is no longer a "100% match".
+
+### Demo script (route `/matches`, `ROOMIE_DEMO_MODE=true`, fictional students only)
+1. Open `/matches`: instant baseline scores, labelled "baseline scores".
+2. Apply filters (e.g. max budget 800, distance 3 mi): the list narrows deterministically; Cole (smoker, filtered by dealbreaker) and Priya (over budget) never appear.
+3. Click **Find My AI Matches**: badge becomes "Gemini-powered analysis". Open Maya (strong match: shared sleep/cleanliness) and Tyler (conflicts: night owl, lively, guests, relaxed cleanliness), then show "Questions to discuss".
+4. To show the fallback honestly, remove `GEMINI_API_KEY` and restart: banner and "Baseline match · not AI" badge appear.
+The prompt-injection profile (`ADVERSARIAL_TEST_PROFILES`) is not in `DEMO_PROFILES` and never appears in the demo.
+
+### Remaining requirements for real Supabase integration (Person 2)
+- A `profiles` table with the columns in `rowToProfile` (required: id, university_id, display_name, budget_min/max, distance_from_campus_miles, move_in_date, roommates_wanted, housing_status). Rows missing one are skipped silently.
+- `SUPABASE_SECRET_KEY` set on the server only; RLS should not expose other students' rows directly to the browser (matching reads them with the secret key and returns only public card fields).
+- Mapper accepts `need_room/have_room` and `needs_room/has_room`; confirm which one the real table uses.
+- Not yet exercised against a live Supabase project; only mocked REST is tested.
+
+### Known limitations
+- Gemini may return fewer candidates than sent; unreturned candidates are simply not shown (no mixing of AI and baseline results).
+- Live Gemini checked with one smoke run (8 candidates): ranking sensible, no invented attributes or logistics observed. That is a single sample, not a guarantee.
+- Touch targets in Person 1's navbar ("Roomie.", "Discover", "How it works") are 21-36px high; left untouched.

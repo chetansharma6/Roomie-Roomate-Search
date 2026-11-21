@@ -138,7 +138,7 @@ Keep local browser and Vercel Function values in `.env.local`, which is ignored 
 
 ## Supabase Authentication Setup
 
-The application uses `signInWithOtp()` with a magic-link redirect to `window.location.origin`. Configure the hosted Supabase project before testing:
+The application uses `signInWithOtp()` with a magic-link redirect to `/signup` on the current origin. Configure the hosted Supabase project before testing:
 
 1. Under **Authentication → Sign In / Providers → Email**, enable email authentication and keep email confirmation enabled.
 2. Under **Authentication → URL Configuration**, set the Site URL to `http://localhost:5173` for local development. Add `http://localhost:5173/signup` and the deployed Vercel `/signup` URL to the allowed redirect URLs before deployment.
@@ -148,6 +148,16 @@ The application uses `signInWithOtp()` with a magic-link redirect to `window.loc
 6. Configure custom SMTP before testing arbitrary student addresses or production traffic. Supabase's built-in sender is intended for initial testing, sends only to project-team addresses, and is limited to two authentication emails per hour per project.
 
 Do not disable email confirmation to work around delivery limits. For a demo without custom SMTP, prepare a legitimately verified account and keep its session available; do not represent an unverified or simulated address as verified.
+
+### Shared authentication service
+
+`src/lib/auth.ts` exports `sendMagicLink(email)`, `getCurrentUser()`, `getSession()`, `signOut()`, and `isSupportedUniversityEmail(email)`. The application is wrapped in `AuthProvider`; screens can call `useAuth()` from `src/hooks/useAuth.ts` for `user`, `session`, `loading`, `error`, `destination`, `sendMagicLink`, `signOut`, and `refresh`. Call `refresh()` after creating a profile. Session restoration verifies identity through Supabase Auth before checking profile existence. New users go to `/onboarding`; existing profiles go to `/discover`. `/account` provides sign-out and conversation insights.
+
+Run `npm test -- tests/auth.test.ts` for the authentication service tests. One test normalizes `Student@USF.EDU`, confirms that `signInWithOtp` receives the `/signup` callback, and checks that invalid or unsupported emails never reach Supabase. The suite also checks expired sessions/links, rate limits, confirmation, profile routing, and sign-out. These are automated tests with mocked Supabase responses.
+
+For a real mailbox test: run `npm run dev`, open `/signup`, enter a supported university address, follow the received link, and confirm a new account reaches `/onboarding`. Save a profile and verify `/discover`, reload to test restoration, then sign out through `/account`. Sign in again and confirm direct routing to `/discover`. Test an expired link and an unsupported email separately. Keep tokens out of logs and screenshots; real student mailbox verification remains pending until this walkthrough succeeds.
+
+If delivery fails for non-team addresses, configure **Authentication → Email → SMTP Settings** with your provider's host, port, username, password, verified sender address, and sender name. Use the provider's recommended TLS settings and disable link tracking if it rewrites magic links. Store SMTP credentials in Supabase settings, then retry a supported mailbox; email confirmation must remain enabled.
 
 The `roommate-insights` Edge Function requires two server-only secrets:
 
@@ -164,6 +174,16 @@ npm run supabase:deploy
 ```
 
 For local Edge Function development, copy `supabase/functions/.env.example` to the ignored `supabase/functions/.env`. The existing `/api/match` Vercel Function reads the same two Gemini variables from the ignored root `.env.local`; configure them in Vercel project settings if that function is deployed. Never prefix the Gemini key with `VITE_`, return it in an HTTP response, or write it to logs.
+
+## Hosting
+
+Use one Vercel project for the Vite frontend and the Node.js `/api/match` function. Supabase continues to provide PostgreSQL, Auth, and the `roommate-insights` Edge Function. A separate Render server is unnecessary for this architecture.
+
+The checked-in `vercel.json` builds with `npm run build`, serves `dist`, and rewrites the application routes to the SPA without rewriting `/api/match`. `.vercelignore` excludes local environment files from uploaded source.
+
+Configure these Vercel environment variables for Production (and Preview if needed): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_ALLOWED_EMAIL_DOMAINS=usf.edu`, server-only `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3.5-flash-lite`, and `ROOMIE_DEMO_MODE=false`. Matching uses the student's JWT and does not require the Supabase secret key. Redeploy after changing browser variables because Vite embeds them at build time.
+
+Once a production URL is assigned, set Supabase's Site URL to that HTTPS origin and allow its exact `/signup` URL alongside the localhost callback. Keep email confirmation and the domain hook enabled. Real student sign-in still requires working SMTP and mailbox confirmation; deployment alone does not validate that flow.
 
 ## AI Roommate Insights
 

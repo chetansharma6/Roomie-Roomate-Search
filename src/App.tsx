@@ -1,9 +1,11 @@
 import { lazy, Suspense, useLayoutEffect } from 'react';
-import { Link, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { DemoDiscover } from './demo/DemoDiscover';
 import { Landing } from './pages/Landing';
 import Discover from './pages/Discover';
+import { useAuth } from './hooks/useAuth';
+import { Onboarding, StudentDiscover } from './pages/AuthenticatedRoutes';
 
 const SignIn = lazy(() => import('./pages/SignIn'));
 const hasSupabase = Boolean(
@@ -44,6 +46,16 @@ function PageNotFound() {
   );
 }
 
+function DiscoveryRoute({ embedded }: { embedded: boolean }) {
+  const { user, loading, destination, error } = useAuth();
+  if (embedded) return <DemoDiscover embedded />;
+  if (loading) return <main className="shell route-notice" role="status">Restoring session…</main>;
+  if (error) return <Navigate to="/signup" replace />;
+  if (!user) return <DemoDiscover embedded={embedded} />;
+  if (destination === '/onboarding') return <Navigate to="/onboarding" replace />;
+  return <StudentDiscover />;
+}
+
 export function App() {
   const [params] = useSearchParams();
   const discovering = useLocation().pathname.replace(/\/+$/, '').toLowerCase() === '/discover';
@@ -58,8 +70,11 @@ export function App() {
       {!discovering && <Navbar />}
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/discover" element={<DemoDiscover embedded={embedded} />} />
+        <Route path="/discover" element={<DiscoveryRoute embedded={embedded} />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/auth" element={<Navigate to="/signup" replace />} />
+        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/account" element={hasSupabase ? <Suspense fallback={<main role="status">Loading account…</main>}><SignIn redirectAfterSignIn={false} /></Suspense> : <SignupPlaceholder />} />
         <Route path="/matches" element={
           <main className="min-h-screen bg-slate-50 text-slate-900" id="main-content">
             <Discover />
