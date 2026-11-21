@@ -2,12 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProfileWrite } from '../src/types/database'
 
 const mocks = vi.hoisted(() => ({
-  getAuthClient: vi.fn(),
-  from: vi.fn(),
-  insert: vi.fn(),
+  upsertMyProfile: vi.fn(),
 }))
 
-vi.mock('../src/lib/auth', () => ({ getAuthClient: mocks.getAuthClient }))
+vi.mock('../src/lib/profiles', () => mocks)
 
 import { createProfile } from '../src/lib/profilePersistence'
 
@@ -38,22 +36,20 @@ const profile: ProfileWrite = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.insert.mockResolvedValue({ error: null })
-  mocks.from.mockReturnValue({ insert: mocks.insert })
-  mocks.getAuthClient.mockResolvedValue({ from: mocks.from })
+  mocks.upsertMyProfile.mockResolvedValue({ id: 'authenticated-owner' })
 })
 
 describe('createProfile', () => {
-  it('inserts the authenticated user id with only writable profile fields', async () => {
+  it('delegates without forwarding the legacy caller-supplied ownership id', async () => {
     await createProfile('student-id', profile)
 
-    expect(mocks.from).toHaveBeenCalledWith('profiles')
-    expect(mocks.insert).toHaveBeenCalledWith({ id: 'student-id', ...profile })
+    expect(mocks.upsertMyProfile).toHaveBeenCalledWith(profile)
+    expect(mocks.upsertMyProfile.mock.calls[0]).toHaveLength(1)
   })
 
   it('propagates Supabase write errors', async () => {
     const error = new Error('database unavailable')
-    mocks.insert.mockResolvedValue({ error })
+    mocks.upsertMyProfile.mockRejectedValueOnce(error)
 
     await expect(createProfile('student-id', profile)).rejects.toBe(error)
   })
