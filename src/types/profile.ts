@@ -58,6 +58,7 @@ export interface RoommateProfile {
   dealbreakers?: Dealbreaker[];
 
   // --- display-only (never scored, never sent to Gemini) ---
+  photoUrl?: string;
   major?: string;
   academicYear?: AcademicYear;
 }

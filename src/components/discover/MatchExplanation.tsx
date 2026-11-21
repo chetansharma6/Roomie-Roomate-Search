@@ -46,20 +46,28 @@ export function MatchExplanation({ profile, match, source, model, disclaimer, on
           <button type="button" onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <span className={`rounded-xl px-4 py-2 text-2xl font-bold ring-1 ${scoreTone(match.compatibilityScore)}`}>
-            {match.compatibilityScore}% <span className="text-sm font-medium">Compatibility</span>
-          </span>
-          <SourceBadge source={source} model={model} />
-        </div>
-        <p className="mt-3 text-sm text-slate-700">{match.summary}</p>
-
-        <List title="Why this match works" items={match.strengths.slice(0, 3)} icon="✓" tone="text-emerald-700" />
-        <List title="Potential concerns" items={match.potentialConflicts} icon="!" tone="text-amber-700" />
-        <List title="Questions to discuss before moving in" items={match.conversationStarters.slice(0, 3)} icon="?" tone="text-indigo-700" />
-
-        <p className="mt-6 border-t border-slate-100 pt-3 text-xs text-slate-500">{disclaimer}</p>
+        <MatchInsights match={match} source={source} model={model} disclaimer={disclaimer} />
       </div>
     </div>
+  );
+}
+
+export function MatchInsights({ match, source, model, disclaimer }: Pick<Props, 'match' | 'source' | 'model' | 'disclaimer'>) {
+  return (
+    <>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <span className={`rounded-xl px-4 py-2 text-2xl font-bold ring-1 ${scoreTone(match.compatibilityScore)}`}>
+          {match.compatibilityScore}% <span className="text-sm font-medium">Compatibility</span>
+        </span>
+        <SourceBadge source={source} model={model} />
+      </div>
+      <p className="mt-3 text-sm text-slate-700">{match.summary}</p>
+
+      <List title="Why this match works" items={match.strengths.slice(0, 3)} icon="✓" tone="text-emerald-700" />
+      <List title="Potential concerns" items={match.potentialConflicts} icon="!" tone="text-amber-700" />
+      <List title="Questions to discuss before moving in" items={match.conversationStarters.slice(0, 3)} icon="?" tone="text-indigo-700" />
+
+      <p className="mt-6 border-t border-slate-100 pt-3 text-xs text-slate-500">{disclaimer}</p>
+    </>
   );
 }

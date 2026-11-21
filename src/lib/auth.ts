@@ -10,6 +10,12 @@ export async function getAuthClient() {
 
 export const supportedUniversityDomains = parseAllowedEmailDomains(import.meta.env.VITE_ALLOWED_EMAIL_DOMAINS)
 
+export const missingAuthSettings = [
+  !import.meta.env.VITE_SUPABASE_URL?.trim() && 'VITE_SUPABASE_URL',
+  !import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() && 'VITE_SUPABASE_PUBLISHABLE_KEY',
+  !supportedUniversityDomains.length && 'VITE_ALLOWED_EMAIL_DOMAINS',
+].filter((setting): setting is string => Boolean(setting))
+
 export class RoomieAuthError extends Error {
   constructor(public readonly code: string, message: string) {
     super(message)
@@ -71,9 +77,9 @@ export async function getCurrentUser() {
 
 export async function getAuthDestination(userId: string): Promise<AuthDestination> {
   const client = await getAuthClient()
-  const { data, error } = await client.from('profiles').select('id').eq('id', userId).maybeSingle()
+  const { data, error } = await client.from('profiles').select('move_in_date').eq('id', userId).maybeSingle()
   if (error) throw new RoomieAuthError('profile_lookup_failed', 'Could not check your profile. Please retry.')
-  return data ? '/discover' : '/onboarding'
+  return data?.move_in_date ? '/discover' : '/onboarding'
 }
 
 export async function signOut(): Promise<void> {

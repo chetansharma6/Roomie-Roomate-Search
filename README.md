@@ -132,7 +132,7 @@ VITE_ALLOWED_EMAIL_DOMAINS=usf.edu
 
 Never commit a Supabase service-role key, secret key, or real student data. Vite variables prefixed with `VITE_` are exposed to browser code.
 
-Keep local browser and Vercel Function values in `.env.local`, which is ignored by Git. Only the project URL and publishable key belong in `VITE_` variables. Server-only secrets must never use that prefix or be imported by code under `src/`.
+Keep local browser and Vercel Function values in `.env.local`, which is ignored by Git. Set the browser-safe Supabase project URL, publishable key, and approved domain list there. Restart Vite after changing these values. Server-only secrets must never use that prefix or be imported by code under `src/`.
 
 `VITE_ALLOWED_EMAIL_DOMAINS` is a comma-separated UX allowlist. It fails closed when empty, but browser validation is not a security boundary. The database migration in `supabase/migrations/` enforces the same policy through a Supabase **Before User Created** hook. Add a domain explicitly in both places before supporting another university; a generic `.edu` suffix is intentionally not accepted.
 
@@ -141,7 +141,7 @@ Keep local browser and Vercel Function values in `.env.local`, which is ignored 
 The application uses `signInWithOtp()` with a magic-link redirect to `/signup` on the current origin. Configure the hosted Supabase project before testing:
 
 1. Under **Authentication → Sign In / Providers → Email**, enable email authentication and keep email confirmation enabled.
-2. Under **Authentication → URL Configuration**, set the Site URL to `http://localhost:5173` for local development. Add `http://localhost:5173/signup` and the deployed Vercel `/signup` URL to the allowed redirect URLs before deployment.
+2. Under **Authentication → URL Configuration**, keep the Site URL set to the production origin for a shared project. Add `http://localhost:5173/signup` and the deployed Vercel `/signup` URL to **Redirect URLs**. For Codespaces, also add the exact forwarded URL from the **Ports** tab with `/signup` appended, for example `https://<codespace-name>-5173.app.github.dev/signup`. Open Roomie through that forwarded URL before requesting a link so the callback uses the same browser origin.
 3. Keep the default magic-link email template. If the UI is later changed to accept a six-digit code, update the appropriate template to display `{{ .Token }}` and add an OTP verification form.
 4. Apply the migrations with `npm run supabase:db:push`.
 5. Under **Authentication → Hooks**, enable **Before User Created**, select the Postgres function `public.hook_restrict_signup_by_email_domain`, and test one allowed and one rejected domain.
@@ -152,6 +152,8 @@ Do not disable email confirmation to work around delivery limits. For a demo wit
 ### Shared authentication service
 
 `src/lib/auth.ts` exports `sendMagicLink(email)`, `getCurrentUser()`, `getSession()`, `signOut()`, and `isSupportedUniversityEmail(email)`. The application is wrapped in `AuthProvider`; screens can call `useAuth()` from `src/hooks/useAuth.ts` for `user`, `session`, `loading`, `error`, `destination`, `sendMagicLink`, `signOut`, and `refresh`. Call `refresh()` after creating a profile. Session restoration verifies identity through Supabase Auth before checking profile existence. New users go to `/onboarding`; existing profiles go to `/discover`. `/account` provides sign-out and conversation insights.
+
+Signed-in Discover uses the same university-scoped profile reads and `/api/match` scores. Saving a profile with a move-in date completes the quiz. The deck builds preference tags from the saved answers, and **Interested** creates a pending row in `roommate_requests`. Apply `20261121220000_profile_photos.sql` before deploying this version. It adds the optional `profiles.photo_url` field used for profile photos. Students without a usable image see initials.
 
 Run `npm test -- tests/auth.test.ts` for the authentication service tests. One test normalizes `Student@USF.EDU`, confirms that `signInWithOtp` receives the `/signup` callback, and checks that invalid or unsupported emails never reach Supabase. The suite also checks expired sessions/links, rate limits, confirmation, profile routing, and sign-out. These are automated tests with mocked Supabase responses.
 
