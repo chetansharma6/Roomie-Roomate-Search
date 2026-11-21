@@ -1,12 +1,14 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
+import Discover from './pages/Discover'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
+  const [showDiscover, setShowDiscover] = useState(false)
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
@@ -41,6 +43,26 @@ export default function App() {
     const { error } = await supabase.auth.signOut()
     setMessage(error?.message ?? '')
     setLoading(false)
+  }
+
+  if (showDiscover) {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900">
+        <div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6">
+          <button type="button" onClick={() => setShowDiscover(false)}>
+            ← Back
+          </button>
+        </div>
+        {/* TODO(Person 2): load the signed-in student's profile + candidate profiles from Supabase and
+            pass them as currentUser / profiles. Until then a signed-in user sees "create your profile";
+            signed-out visitors get the fictional demo (requires ROOMIE_DEMO_MODE on the server). */}
+        {session ? (
+          <Discover currentUser={null} accessToken={session.access_token} />
+        ) : (
+          <Discover />
+        )}
+      </div>
+    )
   }
 
   return (
@@ -82,6 +104,12 @@ export default function App() {
             </button>
           </form>
         )}
+
+        <p>
+          <button type="button" onClick={() => setShowDiscover(true)}>
+            {session ? 'Find roommates' : 'Explore demo matches (fictional data)'}
+          </button>
+        </p>
 
         {message && <p role="status" className="message">{message}</p>}
       </section>
