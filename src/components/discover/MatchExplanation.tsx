@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import type { MatchResult, MatchSource, RoommateProfile } from '../../types/profile.js';
+import type { DemoLifestyleAnswers } from '../onboarding/lifestyleQuestions';
+import { DemoHabits } from './DemoHabits';
 import { SourceBadge } from './SourceBadge.js';
 import { pretty, scoreTone } from './labels.js';
 
@@ -10,6 +12,7 @@ interface Props {
   model?: string;
   disclaimer: string;
   onClose: () => void;
+  demoHabits?: DemoLifestyleAnswers;
 }
 
 function List({ title, items, icon, tone }: { title: string; items: string[]; icon: string; tone: string }) {
@@ -29,7 +32,7 @@ function List({ title, items, icon, tone }: { title: string; items: string[]; ic
   );
 }
 
-export function MatchExplanation({ profile, match, source, model, disclaimer, onClose }: Props) {
+export function MatchExplanation({ profile, match, source, model, disclaimer, onClose, demoHabits }: Props) {
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => ev.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -38,7 +41,7 @@ export function MatchExplanation({ profile, match, source, model, disclaimer, on
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label={`Match details for ${profile.displayName}`} onClick={onClose}>
       <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between gap-4">
+        <div className={`flex items-start justify-between gap-4${demoHabits ? ' sticky top-0 z-10 bg-white py-2' : ''}`}>
           <div>
             <h3 className="text-lg font-semibold">{profile.displayName}</h3>
             <p className="text-xs text-slate-500">{pretty(profile.housingStatus)} · {profile.distanceFromCampusMiles} mi from campus</p>
@@ -46,6 +49,10 @@ export function MatchExplanation({ profile, match, source, model, disclaimer, on
           <button type="button" onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
         </div>
 
+        {demoHabits && <>
+          <p className="my-3 text-sm text-slate-700">{profile.bio}</p>
+          <DemoHabits answers={demoHabits} />
+        </>}
         <MatchInsights match={match} source={source} model={model} disclaimer={disclaimer} />
       </div>
     </div>

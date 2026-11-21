@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEMO_PROFILES, DEMO_STUDENT } from '../data/demoProfiles.js';
 import { FilterPanel } from '../components/discover/FilterPanel.js';
+import { matchingDemoHabits } from '../demo/matchingLifestyle';
 import { MatchExplanation } from '../components/discover/MatchExplanation.js';
 import { MatchResults, type ResultItem } from '../components/discover/MatchResults.js';
 import { MatchingLoadingState } from '../components/discover/MatchingLoadingState.js';
@@ -178,6 +179,7 @@ export default function Discover({
           model={response?.model}
           disclaimer={response?.disclaimer ?? 'Compatibility scores are estimates to start a conversation, not predictions of roommate success.'}
           onClose={() => setOpenId(null)}
+          demoHabits={demoMode ? matchingDemoHabits[opened.profile.id] : undefined}
         />
       )}
     </div>
