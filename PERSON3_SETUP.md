@@ -95,7 +95,7 @@ Optional columns that are null or hold an unrecognised value are treated as "not
 ### Steps
 
 1. Create/align the table above; set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (server only), `GEMINI_API_KEY`; set `ROOMIE_DEMO_MODE=false`.
-2. In `src/App.tsx` replace the `TODO(Person 2)`: load the signed-in student's row with `rowToProfile` and pass `currentUser`, `profiles` (for instant baseline scores/filtering) and `accessToken`.
+2. **Signed-in (server-resolved) mode, already wired:** render `<Discover currentUser={null} accessToken={session.access_token} />` (as `SignIn.tsx` does). Discover posts only the token and filters to `/api/match`; the server loads the student and same-university candidates and returns sanitized candidate cards in `response.profiles` (no email/phone; bio capped at 600 chars). Discover runs automatically on mount and whenever filters change, shows "Create your profile" on a 404, and has no client-side baseline in this mode (the server's fallback ranking is used instead). Passing `currentUser` + `profiles` still works for the client-filtered mode.
 3. To replace demo data, stop passing/using `DEMO_PROFILES`; nothing else changes.
 4. Caveat: the Supabase code path follows the documented REST APIs but has **not been run against a live project**.
 

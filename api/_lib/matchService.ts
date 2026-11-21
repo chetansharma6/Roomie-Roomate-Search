@@ -84,6 +84,15 @@ function rateLimited(key: string, now: number): boolean {
   return false;
 }
 
+/** Public cards for the profiles a response refers to (server-authoritative; bio capped). */
+function cardsFor(matches: { profileId: string }[], pool: RoommateProfile[]): RoommateProfile[] {
+  const byId = new Map(pool.map((p) => [p.id, p]));
+  return matches.flatMap((m) => {
+    const p = byId.get(m.profileId);
+    return p ? [{ ...p, bio: p.bio.slice(0, 600) }] : [];
+  });
+}
+
 const err = (status: number, error: string, message: string): MatchOutput => ({ status, json: { error, message } });
 
 function fallbackResponse(
@@ -96,6 +105,7 @@ function fallbackResponse(
     fallbackReason: reason,
     matches: rankBaseline(requester, candidates),
     disclaimer: SCORE_DISCLAIMER,
+    profiles: cardsFor(rankBaseline(requester, candidates), candidates),
   };
 }
 
@@ -141,7 +151,7 @@ export async function runMatch({ method, body, authorization, clientKey, env, de
   // Hard constraints; university is always the requester's, whatever the client sent.
   const eligible = filterCandidates(everyone, { ...filters, universityId: requester.universityId }, requester);
   if (eligible.length === 0) {
-    return { status: 200, json: { source: 'fallback', matches: [], disclaimer: SCORE_DISCLAIMER } };
+    return { status: 200, json: { source: 'fallback', matches: [], disclaimer: SCORE_DISCLAIMER, profiles: [] } };
   }
 
   const baselineRanked = rankBaseline(requester, eligible);
@@ -166,7 +176,7 @@ export async function runMatch({ method, body, authorization, clientKey, env, de
       generate: deps.generate,
       timeoutMs: deps.timeoutMs,
     });
-    const response: MatchResponse = { source: 'gemini', model, matches, disclaimer: SCORE_DISCLAIMER };
+    const response: MatchResponse = { source: 'gemini', model, matches, disclaimer: SCORE_DISCLAIMER, profiles: cardsFor(matches, topCandidates) };
     cache.set(cacheKey, { at: now(), response });
     return { status: 200, json: response };
   } catch (e) {

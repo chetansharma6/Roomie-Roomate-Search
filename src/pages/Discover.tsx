@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEMO_PROFILES, DEMO_STUDENT } from '../data/demoProfiles.js';
 import { FilterPanel } from '../components/discover/FilterPanel.js';
 import { MatchExplanation } from '../components/discover/MatchExplanation.js';
@@ -37,7 +37,12 @@ export default function Discover({
   const [openId, setOpenId] = useState<string | null>(null);
   const requestSeq = useRef(0);
 
-  const byId = useMemo(() => new Map(profiles.map((p) => [p.id, p])), [profiles]);
+  // Signed in without local profile data: the server loads everything and returns the cards.
+  const serverMode = !currentUser && Boolean(accessToken);
+  const [missingProfile, setMissingProfile] = useState(false);
+  const pool = useMemo(() => (serverMode ? (response?.profiles ?? []) : profiles), [serverMode, response, profiles]);
+
+  const byId = useMemo(() => new Map(pool.map((p) => [p.id, p])), [pool]);
   const eligible = useMemo(
     () => (currentUser ? filterCandidates(profiles, { ...filters, universityId: currentUser.universityId }, currentUser) : []),
     [profiles, filters, currentUser],
@@ -60,7 +65,7 @@ export default function Discover({
 
   const changeFilters = (next: ProfileFilters) => {
     setFilters(next);
-    setResponse(null); // previous AI results no longer reflect the filters
+    if (!serverMode) setResponse(null); // previous AI results no longer reflect the filters
     setError(null);
   };
 
@@ -79,15 +84,22 @@ export default function Discover({
       if (seq === requestSeq.current) setResponse(result);
     } catch (e) {
       if (seq !== requestSeq.current) return;
+      if (e instanceof MatchClientError && e.kind === 'missing_profile') setMissingProfile(true);
       setError(e instanceof MatchClientError ? e.message : 'Something went wrong while matching. Please try again.');
     } finally {
       if (seq === requestSeq.current) setLoading(false);
     }
   }, [currentUser, profiles, filters, accessToken, demoMode]);
 
+  // Server mode has nothing to show until a request runs, so run on mount and whenever filters change.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/filter-change; setState happens after await
+    if (serverMode) void runMatching();
+  }, [serverMode, runMatching]);
+
   const opened = openId ? items.find((i) => i.profile.id === openId) : undefined;
 
-  if (!currentUser) {
+  if (!currentUser && (!serverMode || missingProfile)) {
     return (
       <div className="mx-auto max-w-3xl p-6">
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-6">
@@ -108,7 +120,7 @@ export default function Discover({
             Hard housing filters narrow the list; compatibility ranks what is left.
           </p>
         </div>
-        <button type="button" onClick={runMatching} disabled={loading || eligible.length === 0}
+        <button type="button" onClick={runMatching} disabled={loading || (!serverMode && eligible.length === 0)}
           className="rounded-lg bg-indigo-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50">
           ✦ Find My AI Matches
         </button>

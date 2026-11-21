@@ -14,7 +14,7 @@ export const CLIENT_TIMEOUT_MS = 25_000;
 /** Thrown only for problems the user must fix (no fallback can help). */
 export class MatchClientError extends Error {
   constructor(
-    public readonly kind: 'missing_profile' | 'unauthorized',
+    public readonly kind: 'missing_profile' | 'unauthorized' | 'unavailable',
     message: string,
   ) {
     super(message);
@@ -74,6 +74,9 @@ export function describeFallback(reason?: FallbackReason): string {
  */
 export async function findMatches(params: FindMatchesParams): Promise<MatchResponse> {
   const { requester, candidates, filters = {}, accessToken, demoStudentId, endpoint = '/api/match', signal } = params;
+  // Server-resolved mode: signed in but no local profile data. The server verifies the
+  // token, loads the student and candidates, and returns the cards to display.
+  if (!requester && accessToken) return findMatchesViaServer({ ...params, filters });
   if (!requester) throw new MatchClientError('missing_profile', 'Create your profile before searching for matches.');
 
   const eligible = filterCandidates(candidates, { ...filters, universityId: requester.universityId }, requester);
@@ -120,4 +123,33 @@ export async function findMatches(params: FindMatchesParams): Promise<MatchRespo
 
   inflight.set(key, run);
   return run;
+}
+
+async function findMatchesViaServer(params: FindMatchesParams): Promise<MatchResponse> {
+  const { filters = {}, accessToken, endpoint = '/api/match', signal } = params;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), params.timeoutMs ?? CLIENT_TIMEOUT_MS);
+  signal?.addEventListener('abort', () => controller.abort(), { once: true });
+  try {
+    const res = await (params.fetchImpl ?? fetch)(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ filters }),
+      signal: controller.signal,
+    });
+    if (res.status === 404) throw new MatchClientError('missing_profile', 'Create your profile before searching for matches.');
+    if (res.status === 401) throw new MatchClientError('unauthorized', 'Please sign in again to find matches.');
+    if (res.status === 429) throw new MatchClientError('unavailable', 'Too many match requests. Please wait a minute and try again.');
+    if (!res.ok) throw new MatchClientError('unavailable', 'Matching is unavailable right now. Please try again shortly.');
+    const parsed = matchResponseSchema.safeParse(await res.json().catch(() => null));
+    if (!parsed.success) throw new MatchClientError('unavailable', 'Matching returned an unexpected response. Please try again.');
+    const known = new Set((parsed.data.profiles ?? []).map((p) => p.id));
+    return { ...parsed.data, matches: parsed.data.matches.filter((m) => known.has(m.profileId)) };
+  } catch (e) {
+    if (e instanceof MatchClientError) throw e;
+    if (signal?.aborted) throw e;
+    throw new MatchClientError('unavailable', 'Could not reach the matching service. Please try again.');
+  } finally {
+    clearTimeout(timer);
+  }
 }
