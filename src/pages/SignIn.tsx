@@ -1,71 +1,52 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import type { Session } from '@supabase/supabase-js'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { isAllowedEmailDomain, parseAllowedEmailDomains } from '../lib/emailDomains'
+import { authErrorMessage, supportedUniversityDomains } from '../lib/auth'
+import { useAuth } from '../hooks/useAuth'
 import Discover from './Discover'
 
 interface RoommateInsightsResponse {
   insight: string
 }
 
-const allowedEmailDomains = parseAllowedEmailDomains(import.meta.env.VITE_ALLOWED_EMAIL_DOMAINS)
+const allowedEmailDomains = supportedUniversityDomains
 
-export default function SignIn() {
-  const [session, setSession] = useState<Session | null>(null)
+export default function SignIn({ redirectAfterSignIn = true }: { redirectAfterSignIn?: boolean }) {
+  const { session, user, loading: restoring, error: authError, destination, sendMagicLink, signOut, refresh } = useAuth()
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [showDiscover, setShowDiscover] = useState(false)
   const [profile, setProfile] = useState('')
   const [insight, setInsight] = useState('')
   const [insightLoading, setInsightLoading] = useState(false)
 
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setLoading(false)
-    })
+    if (redirectAfterSignIn && !restoring && user && destination) navigate(destination, { replace: true })
+  }, [redirectAfterSignIn, restoring, user, destination, navigate])
 
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession)
-      setLoading(false)
-    })
-
-    return () => data.subscription.unsubscribe()
-  }, [])
-
-  async function sendMagicLink(event: FormEvent<HTMLFormElement>) {
+  async function requestMagicLink(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setMessage('')
 
-    if (allowedEmailDomains.length === 0) {
-      setMessage('University email sign-in is not configured. Please contact the Roomie team.')
-      return
-    }
-
-    if (!isAllowedEmailDomain(email, allowedEmailDomains)) {
-      setMessage(`Use an approved university email address (${allowedEmailDomains.join(', ')}).`)
-      return
-    }
-
     setLoading(true)
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: new URL('/signup', window.location.origin).href },
-    })
-
-    setMessage(error ? error.message : 'Check your email for the secure sign-in link.')
-    setLoading(false)
+    try {
+      await sendMagicLink(email)
+      setMessage('Check your email for the secure sign-in link.')
+    } catch (error) { setMessage(authErrorMessage(error)) }
+    finally { setLoading(false) }
   }
 
-  async function signOut() {
+  async function handleSignOut() {
     setLoading(true)
-    const { error } = await supabase.auth.signOut()
-    setInsight('')
-    setProfile('')
-    setMessage(error?.message ?? '')
-    setLoading(false)
+    try {
+      await signOut()
+      setInsight('')
+      setProfile('')
+      setMessage('')
+    } catch (error) { setMessage(authErrorMessage(error)) }
+    finally { setLoading(false) }
   }
 
   async function requestInsights(event: FormEvent<HTMLFormElement>) {
@@ -118,7 +99,7 @@ export default function SignIn() {
           matter: budget, timing, location, and daily routines.
         </p>
 
-        {loading && !session ? (
+        {restoring ? (
           <p role="status">Connecting securely…</p>
         ) : session ? (
           <div className="member-area">
@@ -126,7 +107,7 @@ export default function SignIn() {
               <p>
                 Signed in as <strong>{session.user.email}</strong>
               </p>
-              <button className="secondary" type="button" onClick={signOut} disabled={loading}>
+              <button className="secondary" type="button" onClick={handleSignOut} disabled={loading}>
                 Sign out
               </button>
             </div>
@@ -168,7 +149,7 @@ export default function SignIn() {
             )}
           </div>
         ) : (
-          <form className="auth-panel" onSubmit={sendMagicLink}>
+          <form className="auth-panel" onSubmit={requestMagicLink}>
             <label htmlFor="email">University email</label>
             <input
               id="email"
@@ -197,6 +178,7 @@ export default function SignIn() {
         </p>
 
         {message && <p role="alert" className="message">{message}</p>}
+        {authError && <p role="alert" className="message">{authError} <button type="button" onClick={() => void refresh()}>Retry session</button></p>}
       </section>
     </main>
   )

@@ -120,7 +120,7 @@ export async function runMatch({ method, body, authorization, clientKey, env, de
     if (!token) return err(401, 'unauthorized', 'Sign in to find matches.');
     const userId = await verifyAccessToken(token, env, deps.fetchImpl);
     if (!userId) return err(401, 'unauthorized', 'Your session is invalid or expired.');
-    repo = createSupabaseRepository(env, deps.fetchImpl);
+    repo = createSupabaseRepository(env, token, deps.fetchImpl);
     requesterId = userId;
   }
 
