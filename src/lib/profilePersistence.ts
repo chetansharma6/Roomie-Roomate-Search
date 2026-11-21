@@ -1,8 +1,7 @@
 import type { ProfileWrite } from '../types/database'
-import { getAuthClient } from './auth'
+import { upsertMyProfile } from './profiles'
 
-export async function createProfile(userId: string, profile: ProfileWrite): Promise<void> {
-  const client = await getAuthClient()
-  const { error } = await client.from('profiles').insert({ id: userId, ...profile })
-  if (error) throw error
+/** @deprecated Use upsertMyProfile; the legacy ownership argument is ignored. */
+export async function createProfile(_userId: string, profile: ProfileWrite): Promise<void> {
+  await upsertMyProfile(profile)
 }

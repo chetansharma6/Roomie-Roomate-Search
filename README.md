@@ -175,6 +175,53 @@ npm run supabase:deploy
 
 For local Edge Function development, copy `supabase/functions/.env.example` to the ignored `supabase/functions/.env`. The existing `/api/match` Vercel Function reads the same two Gemini variables from the ignored root `.env.local`; configure them in Vercel project settings if that function is deployed. Never prefix the Gemini key with `VITE_`, return it in an HTTP response, or write it to logs.
 
+## Profile and roommate-request data access
+
+Import profiles from `src/lib/profiles.ts` and requests from `src/lib/roommateRequests.ts`. Both use the existing Supabase browser SDK and confirmed Auth identity. Database RLS remains the authorization boundary. `ProfileRow` and `RoommateRequestRow` reuse `src/types/database.ts`; convert complete profiles with `rowToProfile` when passing them to Person 3's matching UI.
+
+| Function | Parameters | Resolved value |
+| --- | --- | --- |
+| `getMyProfile()` | None | `ProfileRow` or `null` when missing; includes the owner's inactive/draft profile |
+| `upsertMyProfile(input)` | `ProfileInput`: complete writable snake_case profile data | Saved `ProfileRow`; owner ID comes from Auth |
+| `listProfiles()` | None | `ProfileRow[]`: first 500 authorized active profiles, excluding the current user |
+| `getProfileById(id)` | Profile UUID | `ProfileRow` or `null` for missing/RLS-hidden rows |
+| `sendRoommateRequest(receiverId)` | Receiver UUID | Created pending `RoommateRequestRow` |
+| `getMyRoommateRequests()` | None | `{ sent: RoommateRequestRow[], received: RoommateRequestRow[] }`, newest first |
+| `respondToRoommateRequest(requestId, status)` | Request UUID and `'accepted'` or `'declined'` | Updated `RoommateRequestRow` |
+
+All functions return Promises and reject with `DataAccessError` from `src/lib/dataAccess.ts`. Its stable `code` is `unauthenticated`, `validation`, `forbidden`, `duplicate`, `not_found`, `network`, or `database`; its message is safe for display. Treat missing/RLS-hidden profiles as `null`, empty lists as `[]`, and a zero-row request response as `not_found` (unavailable or already answered). Loading belongs in the consuming component; `src/examples/useMyProfileExample.ts` shows loading, empty and error states with unmount protection.
+
+`ProfileInput` requires `display_name`, integer budgets (0–100,000, minimum <= maximum), `distance_from_campus_miles` (0–1,000), `roommates_wanted` (integer 1–20), and `housing_status` (`have_room` or `need_room`). Bio is capped at 2,000 characters; display names at 100. Preference enums follow the existing matching types. Omitted optional fields reset to null/empty defaults, and `is_active` defaults to true: this is a complete-profile save, not a partial patch. IDs, university, verification and timestamps are rejected as input. A nullable move-in date supports drafts, which the existing matching mapper skips.
+
+```ts
+import { getMyProfile, listProfiles, upsertMyProfile } from './lib/profiles'
+import { sendRoommateRequest, getMyRoommateRequests, respondToRoommateRequest } from './lib/roommateRequests'
+import { DataAccessError } from './lib/dataAccess'
+
+// After useAuth() has restored the signed-in student:
+try {
+  const saved = await upsertMyProfile({
+    display_name: 'Alex', budget_min: 600, budget_max: 950,
+    distance_from_campus_miles: 3, roommates_wanted: 2,
+    housing_status: 'need_room', move_in_date: '2027-08-01',
+  })
+  const mine = await getMyProfile()
+  const candidates = await listProfiles()
+  if (candidates[0]) await sendRoommateRequest(candidates[0].id)
+  const { received } = await getMyRoommateRequests()
+  const pending = received.find((request) => request.status === 'pending')
+  if (pending) await respondToRoommateRequest(pending.id, 'accepted')
+  // Call useAuth().refresh() after first profile creation to refresh route state.
+} catch (error) {
+  const message = error instanceof DataAccessError ? error.message : 'Please retry.'
+  // Display message in the component; reset its loading flag in finally.
+}
+```
+
+The existing `createProfile(userId, profile)` helper delegates to the new authenticated service for compatibility; its legacy userId argument is ignored. No teammate UI components were rewritten. Sending a repeated request in either direction is a `duplicate` error, even after acceptance/decline; receivers may decide only once. The database enforces those rules atomically.
+
+Run `npm test -- tests/profileDataAccess.test.ts tests/profilePersistence.test.ts` for mocked SDK tests. For real-session testing, use two confirmed supported-university accounts: save each own profile; verify A cannot edit B or set verification; deactivate B and confirm A's list excludes B; send A→B; ensure repeats/reverse/self requests fail; confirm only B can respond; confirm an unrelated account cannot see either party's request. The hosted database checklist is in `supabase/DATABASE_SETUP.txt`. Mocked tests do not prove a real mailbox flow.
+
 ## Hosting
 
 Use one Vercel project for the Vite frontend and the Node.js `/api/match` function. Supabase continues to provide PostgreSQL, Auth, and the `roommate-insights` Edge Function. A separate Render server is unnecessary for this architecture.
