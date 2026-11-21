@@ -1,22 +1,31 @@
 import type { RoommateProfile } from '../types/RoommateProfile';
 
+// Names are matched to the person shown in /demo-portraits/NN.webp (index + 1).
 const people = [
-  ['Maya Brooks', 'Psychology'], ['Jordan Lee', 'Computer Science'], ['Amara Davis', 'Graphic Design'],
-  ['Ethan Carter', 'Mechanical Engineering'], ['Sofia Alvarez', 'Public Health'], ['Noah Patel', 'Environmental Science'],
-  ['Avery Thompson', 'Finance'], ['Kai Nguyen', 'Information Technology'], ['Riley Morgan', 'Nursing'],
-  ['Leila Hassan', 'Architecture'], ['Mateo Rivera', 'Kinesiology'], ['Zoe Kim', 'Biomedical Sciences'],
-  ['Andre Wilson', 'Marketing'], ['Priya Shah', 'Data Science'], ['Cameron Brooks', 'Film Studies'],
-  ['Nia Johnson', 'Political Science'], ['Lucas Chen', 'Electrical Engineering'], ['Elena Garcia', 'Art History'],
-  ['Drew Martin', 'Accounting'], ['Aisha Robinson', 'Marine Biology'], ['Owen Murphy', 'Economics'],
-  ['Valentina Cruz', 'Sociology'], ['Samir Ahmed', 'Chemistry'], ['Harper Scott', 'English'],
-  ['Jules Bennett', 'Sport Management'], ['Ivy Lin', 'Studio Art'], ['Malik Foster', 'Criminal Justice'],
-  ['Clara Evans', 'Nutrition'], ['Theo Campbell', 'Physics'], ['Gabriela Torres', 'Social Work'],
-  ['Quinn Bailey', 'Supply Chain Management'], ['Jin Park', 'Mathematics'], ['Layla James', 'Education'],
-  ['Miles Cooper', 'Digital Media'], ['Anika Desai', 'Psychology'], ['Rafael Ortiz', 'Civil Engineering'],
-  ['Skylar Reed', 'Hospitality Management'], ['Tariq Ali', 'Geography'], ['June Nakamura', 'Music'],
-  ['Eli Price', 'Philosophy'], ['Mina Cho', 'Health Sciences'], ['Caleb Ward', 'Entrepreneurship'],
-  ['Simone Brooks', 'Anthropology'], ['Arjun Mehta', 'Statistics'], ['Sage Turner', 'Theatre'],
-  ['Isabel Flores', 'Advertising'], ['Devon Price', 'Computer Engineering'], ['Lena Fischer', 'Languages'],
+  ['Mateo Rivera', 'Psychology'], ['Mina Cho', 'Computer Science'],
+  ['Malik Foster', 'Graphic Design'], ['Clara Evans', 'Mechanical Engineering'],
+  ['Priya Shah', 'Public Health'], ['Owen Murphy', 'Environmental Science'],
+  ['Leila Hassan', 'Finance'], ['Jin Park', 'Information Technology'],
+  ['Ivy Lin', 'Nursing'], ['Rafael Ortiz', 'Architecture'],
+  ['Nia Johnson', 'Kinesiology'], ['Caleb Ward', 'Biomedical Sciences'],
+  ['Lucas Chen', 'Marketing'], ['Harper Scott', 'Data Science'],
+  ['Arjun Mehta', 'Film Studies'], ['Zoe Kim', 'Political Science'],
+  ['June Nakamura', 'Electrical Engineering'], ['Ethan Carter', 'Art History'],
+  ['Simone Brooks', 'Accounting'], ['Samir Ahmed', 'Marine Biology'],
+  ['Maya Brooks', 'Economics'], ['Kai Nguyen', 'Sociology'],
+  ['Valentina Cruz', 'Chemistry'], ['Cameron Brooks', 'English'],
+  ['Andre Wilson', 'Sport Management'], ['Anika Desai', 'Studio Art'],
+  ['Hana Ito', 'Criminal Justice'], ['Luca Moretti', 'Nutrition'],
+  ['Layla James', 'Physics'], ['Tariq Ali', 'Social Work'],
+  ['Avery Thompson', 'Supply Chain Management'], ['Jordan Lee', 'Mathematics'],
+  ['Sofia Alvarez', 'Education'], ['Daniel Choi', 'Digital Media'],
+  ['Aisha Robinson', 'Psychology'], ['Eli Price', 'Civil Engineering'],
+  ['Noah Patel', 'Hospitality Management'], ['Lena Fischer', 'Geography'],
+  ['Emi Watanabe', 'Music'], ['Riley Morgan', 'Philosophy'],
+  ['Kenji Mori', 'Health Sciences'], ['Zainab Karim', 'Entrepreneurship'],
+  ['Theo Campbell', 'Anthropology'], ['Gabriela Torres', 'Statistics'],
+  ['Miles Cooper', 'Theatre'], ['Sophie Tran', 'Advertising'],
+  ['Marcus Davis', 'Computer Engineering'], ['Skylar Reed', 'Languages'],
 ] as const;
 
 const interests = [
@@ -63,11 +72,7 @@ function dateAfter(start: string, days: number): string {
 }
 
 function avatarUrl(index: number): string {
-  const sheet = Math.floor(index / 16) + 1;
-  const tile = index % 16;
-  const column = tile % 4;
-  const row = Math.floor(tile / 4);
-  return `/demo-portraits/sheet-${sheet}.png#tile=${column},${row}`;
+  return `/demo-portraits/${String(index + 1).padStart(2, '0')}.webp`;
 }
 
 /**

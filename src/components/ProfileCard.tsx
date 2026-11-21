@@ -29,18 +29,11 @@ export function ProfileCard({ profile, matchScore, showBio = true, badge, onView
   const [failedPhoto, setFailedPhoto] = useState<string>();
   const initials = profile.name.trim().split(/\s+/).slice(0, 2).map((word) => word[0]).join('');
   const hasRoom = profile.housingStatus === 'have_room';
-  const demoPhoto = profile.photoUrl?.match(/^(\/demo-portraits\/sheet-\d+\.png)#tile=(\d),(\d)$/);
-  const spritePosition = demoPhoto
-    ? `${Number(demoPhoto[2]) * (100 / 3)}% ${Number(demoPhoto[3]) * (100 / (4 - (1 / 1.85)))}%`
-    : undefined;
 
   return (
     <article className="profile-card">
       <div className={`profile-photo ${hasRoom ? 'profile-photo-peach' : ''}`} aria-hidden="true">
-        {demoPhoto ? (
-          <span className="profile-photo-sprite" role="img" aria-label="Fictional demo student portrait"
-            style={{ backgroundImage: `url(${demoPhoto[1]})`, backgroundPosition: spritePosition }} />
-        ) : profile.photoUrl && profile.photoUrl !== failedPhoto ? (
+        {profile.photoUrl && profile.photoUrl !== failedPhoto ? (
           <img key={profile.photoUrl} src={profile.photoUrl} alt="" draggable={false}
             onError={() => setFailedPhoto(profile.photoUrl)} />
         ) : <span>{initials}</span>}
