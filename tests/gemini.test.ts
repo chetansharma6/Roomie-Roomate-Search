@@ -54,13 +54,13 @@ describe('analyzeWithGemini', () => {
     expect(args.systemInstruction).toBe(ROOMIE_SYSTEM_INSTRUCTION);
     expect(args.jsonSchema).toHaveProperty('properties.matches');
   });
-  it('sends at most 10 candidates', async () => {
+  it('sends at most 5 candidates', async () => {
     const many = Array.from({ length: 15 }, (_, i) => makeProfile({ id: `c${i}` }));
     const generate = vi.fn<GenerateFn>().mockResolvedValue(json(item('c0')));
     await analyzeWithGemini(me, many, { ...opts, generate });
     const prompt = generate.mock.calls[0]![0].prompt;
-    expect(prompt).toContain('count="10"');
-    expect(prompt).not.toContain('"c10"');
+    expect(prompt).toContain('count="5"');
+    expect(prompt).not.toContain('"c5"');
   });
   it('maps invalid output to invalid_ai_response', async () => {
     const generate: GenerateFn = async () => json(item('ghost'));

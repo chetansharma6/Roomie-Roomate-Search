@@ -4,7 +4,7 @@ Roomie is a student-focused room and roommate discovery project. It is designed 
 
 ## Project Status
 
-The repository now contains an initial React, TypeScript, and Vite application with a Supabase browser client and passwordless email authentication. Profile persistence, discovery, matching, database migrations, and automated tests are still planned and should not be presented as complete.
+The repository contains a React, TypeScript, and Vite application with passwordless Supabase authentication, fictional demo discovery, deterministic compatibility scoring, Gemini-assisted matching through a Vercel Function, and an authenticated Supabase Edge Function for Gemini-powered roommate conversation insights. Live profile persistence and database migrations are still pending.
 
 ## Problem
 
@@ -79,7 +79,7 @@ In-app messaging should wait until mutual interest exists.
 
 ## Stack
 
-React, TypeScript, Vite, and Supabase Auth are implemented. The remaining entries describe the planned direction:
+The implemented stack is:
 
 | Layer | Technology |
 | --- | --- |
@@ -87,6 +87,7 @@ React, TypeScript, Vite, and Supabase Auth are implemented. The remaining entrie
 | Styling | Tailwind CSS |
 | Components | shadcn/ui or equivalent accessible primitives |
 | Authentication | Supabase Auth |
+| AI orchestration | Vercel Functions, Supabase Edge Functions, and Gemini API |
 | Database | Supabase and PostgreSQL |
 | Matching logic | TypeScript |
 | Hosting | Vercel |
@@ -107,9 +108,15 @@ Available scripts are:
 
 ```bash
 npm run dev
+npm run dev:vercel
 npm run build
 npm run lint
 npm run preview
+npm run typecheck
+npm test
+npm run smoke:gemini
+npm run supabase:serve
+npm run supabase:deploy
 ```
 
 ## Environment Variables
@@ -123,26 +130,57 @@ VITE_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 
 Never commit a Supabase service-role key, secret key, or real student data. Vite variables prefixed with `VITE_` are exposed to browser code.
 
-Keep local values in `.env.local`, which is ignored by Git. Only the project URL and publishable key belong in `VITE_` variables. Server-only secrets must never use that prefix or be imported by code under `src/`.
+Keep local browser and Vercel Function values in `.env.local`, which is ignored by Git. Only the project URL and publishable key belong in `VITE_` variables. Server-only secrets must never use that prefix or be imported by code under `src/`.
+
+The `roommate-insights` Edge Function requires two server-only secrets:
+
+```dotenv
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-3.5-flash
+```
+
+Set production values in Supabase under **Edge Functions → Secrets**, or with the Supabase CLI:
+
+```bash
+supabase secrets set --env-file path/to/ignored-gemini.env
+npm run supabase:deploy
+```
+
+For local Edge Function development, copy `supabase/functions/.env.example` to the ignored `supabase/functions/.env`. The existing `/api/match` Vercel Function reads the same two Gemini variables from the ignored root `.env.local`; configure them in Vercel project settings if that function is deployed. Never prefix the Gemini key with `VITE_`, return it in an HTTP response, or write it to logs.
+
+## AI Roommate Insights
+
+Signed-in users can submit a short description of their housing and everyday living preferences. The browser sends it to the authenticated `roommate-insights` Edge Function, which validates the user and input before contacting Gemini. The function returns conversation prompts and practical considerations; it does not make housing eligibility, trust, safety, or guaranteed-compatibility decisions.
+
+Users should not submit names, contact details, exact addresses, or other sensitive personal information. AI output can be incomplete and should be independently verified.
 
 ## Project Structure
 
-The current foundation is:
+Key directories are:
 
 ```text
 roomie/
+  api/
+    match.ts
   src/
+    components/
+    pages/
     lib/
       supabase.ts
     App.tsx
     main.tsx
     styles.css
+  supabase/
+    functions/
+      roommate-insights/
+        index.ts
+    config.toml
   .env.example
   package.json
   README.md
 ```
 
-The current single page provides passwordless email sign-in and sign-out. Representative future routes are `/auth`, `/onboarding`, `/discover`, and `/profile/:id`.
+The application provides passwordless email authentication, a fictional discovery demo with deterministic and Gemini-assisted ranking, and authenticated AI conversation insights. Profile persistence must be completed before signed-in discovery can use live student records.
 
 ## Planned Data Model
 
@@ -217,15 +255,17 @@ Roomie should not replace meeting a prospective roommate, reviewing a lease, or 
 The proposed delivery sequence is:
 
 1. Scaffold the React and TypeScript application. (Complete)
-2. Define the shared profile and listing types.
-3. Add a landing page and responsive navigation.
+2. Define the shared profile and listing types. (Profile types complete; listings pending)
+3. Add a landing page and responsive navigation. (Initial experience complete)
 4. Add profile creation and editing.
 5. Add Supabase authentication and database access. (Authentication connected; database access pending)
-6. Add fictional demo profiles and discovery filters.
-7. Add explainable compatibility ranking.
+6. Add fictional demo profiles and discovery filters. (Complete)
+7. Add explainable compatibility ranking. (Complete with deterministic fallback and Gemini enhancement)
 8. Add an interest request flow if persistence and authorization are stable.
-9. Add automated tests and database security checks.
+9. Add automated tests and database security checks. (Matching tests complete; database checks pending)
 10. Deploy and test the complete browser experience on desktop and mobile.
+
+Gemini-powered roommate conversation insights are implemented through a server-side Supabase Edge Function. They supplement rather than replace the deterministic compatibility model planned above.
 
 Demo data should always be labeled as fictional and must not be presented as real users or listings.
 
