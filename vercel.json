@@ -1,3 +1,8 @@
 {
-  "functions": { "api/match.ts": { "maxDuration": 30 } }
+  "functions": { "api/match.ts": { "maxDuration": 30 } },
+  "rewrites": [
+    { "source": "/discover", "destination": "/index.html" },
+    { "source": "/signup", "destination": "/index.html" },
+    { "source": "/matches", "destination": "/index.html" }
+  ]
 }

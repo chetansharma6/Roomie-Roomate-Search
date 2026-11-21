@@ -1,3 +1,2 @@
-@import "tailwindcss";
-/* Teammate's global styles go into the base layer so Tailwind utilities used by Discover can override them. */
-@import "./styles.css" layer(base);
+@import "./styles.css";
+@import "./sign-in.css" layer(base);
