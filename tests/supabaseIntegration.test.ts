@@ -58,6 +58,12 @@ describe('rowToProfile (Supabase row -> RoommateProfile)', () => {
 });
 
 describe('createSupabaseRepository (mocked REST)', () => {
+  it('refuses an empty user token and rejects accounts without a confirmed email', async () => {
+    expect(() => createSupabaseRepository(env, '  ')).toThrow();
+    const unconfirmed = (async () => ({ ok: true, status: 200, json: async () => ({ id: 'me' }) }) as unknown as Response) as typeof fetch;
+    expect(await verifyAccessToken('user-jwt', env, unconfirmed)).toBeNull();
+  });
+
   it('queries the profiles table server-side by id / university and skips unusable rows', async () => {
     const fetchImpl = vi.fn(async (url: string | URL, ...rest: unknown[]) => {
       void rest;
