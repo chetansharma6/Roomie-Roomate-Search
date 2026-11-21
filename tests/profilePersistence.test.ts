@@ -2,15 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProfileWrite } from '../src/types/database'
 
 const mocks = vi.hoisted(() => ({
-  getAuthClient: vi.fn(),
-  from: vi.fn(),
-  insert: vi.fn(),
-  update: vi.fn(),
-  eq: vi.fn(),
-  is: vi.fn(),
+  upsertMyProfile: vi.fn(),
 }))
 
-vi.mock('../src/lib/auth', () => ({ getAuthClient: mocks.getAuthClient }))
+vi.mock('../src/lib/profiles', () => mocks)
 
 import { createProfile } from '../src/lib/profilePersistence'
 
@@ -41,35 +36,20 @@ const profile: ProfileWrite = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.insert.mockResolvedValue({ error: null })
-  mocks.from.mockReturnValue({ insert: mocks.insert, update: mocks.update })
-  mocks.update.mockReturnValue({ eq: mocks.eq })
-  mocks.eq.mockReturnValue({ is: mocks.is })
-  mocks.is.mockResolvedValue({ error: null })
-  mocks.getAuthClient.mockResolvedValue({ from: mocks.from })
+  mocks.upsertMyProfile.mockResolvedValue({ id: 'authenticated-owner' })
 })
 
 describe('createProfile', () => {
-  it('inserts the authenticated user id with only writable profile fields', async () => {
+  it('delegates without forwarding the legacy caller-supplied ownership id', async () => {
     await createProfile('student-id', profile)
 
-    expect(mocks.from).toHaveBeenCalledWith('profiles')
-    expect(mocks.insert).toHaveBeenCalledWith({ id: 'student-id', ...profile })
-  })
-
-  it('finishes an existing draft without overwriting an already completed profile', async () => {
-    mocks.insert.mockResolvedValue({ error: { code: '23505' } })
-
-    await createProfile('student-id', profile)
-
-    expect(mocks.update).toHaveBeenCalledWith(profile)
-    expect(mocks.eq).toHaveBeenCalledWith('id', 'student-id')
-    expect(mocks.is).toHaveBeenCalledWith('move_in_date', null)
+    expect(mocks.upsertMyProfile).toHaveBeenCalledWith(profile)
+    expect(mocks.upsertMyProfile.mock.calls[0]).toHaveLength(1)
   })
 
   it('propagates Supabase write errors', async () => {
     const error = new Error('database unavailable')
-    mocks.insert.mockResolvedValue({ error })
+    mocks.upsertMyProfile.mockRejectedValueOnce(error)
 
     await expect(createProfile('student-id', profile)).rejects.toBe(error)
   })

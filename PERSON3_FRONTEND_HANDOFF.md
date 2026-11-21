@@ -41,13 +41,17 @@ CSS: Discover uses Tailwind v4 utilities (`@tailwindcss/vite`, imported in `src/
 
 ```bash
 npm install
-cat > .env.local <<'EOF'
+# Preserve existing .env.local values; add/update the settings shown below.
+npm run dev          # plain Vite; a Vite plugin serves /api/match. No `vercel dev` needed.
+# open http://localhost:5173/matches
+```
+
+Edit the existing ignored `.env.local` rather than replacing it:
+
+```dotenv
 ROOMIE_DEMO_MODE=true
 GEMINI_MODEL=gemini-3.5-flash-lite
 GEMINI_API_KEY=your_key_here
-EOF
-npm run dev          # plain Vite; a Vite plugin serves /api/match. No `vercel dev` needed.
-# open http://localhost:5173/matches
 ```
 
 (`.env.local` may also hold the Supabase variables from `.env.example`; they are not needed for demo mode.) Demo mode is disabled automatically when `VERCEL_ENV=production` or `NODE_ENV=production` without Vercel.
@@ -56,11 +60,13 @@ Then: adjust the budget and distance filters → click **Find My AI Matches** �
 
 ## D. Test authenticated matching (UNVERIFIED end to end)
 
-Prerequisites: Supabase project with the `profiles` table (Person 2), `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, server-side `SUPABASE_URL`/`SUPABASE_ANON_KEY`/`SUPABASE_SERVICE_ROLE_KEY` (or the `SUPABASE_SECRET_KEY` / `SUPABASE_JWKS_URL` set in `.env.example`), `ROOMIE_DEMO_MODE` unset/false, a confirmed university email, and an active profile with budget, distance, roommates wanted and move-in date.
+Prerequisites: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_ALLOWED_EMAIL_DOMAINS=usf.edu`, `ROOMIE_DEMO_MODE=false`, a confirmed supported university email, and an active profile with budget, distance, roommates wanted and move-in date. The three database migrations are applied to Roomie's hosted project; RLS is enabled and hosted policy checks passed. Matching uses the caller's JWT and publishable key; no Supabase secret/service-role key is required.
+
+Person 2's reusable data-access functions are in `src/lib/profiles.ts` and `src/lib/roommateRequests.ts`, with validation, errors and usage examples documented in README. The legacy onboarding persistence helper delegates to the authenticated profile service. Use `rowToProfile` when converting raw database rows to matching profiles.
 
 Flow: `useAuth` supplies `session.access_token` → `StudentDiscover` loads `profiles` rows via Supabase, maps them with `rowToProfile` and passes `accessToken` to `Discover` → `/api/match` verifies the bearer token and loads profiles server-side. Errors: 401 (missing/invalid token), 503 (auth not configured), 502 (profile store error); a user without a profile sees "Complete your profile" in `StudentDiscover`.
 
-Verified by unit tests (mocked): token handling, demo-mode gating, profile mapping. **Not verified** against a real Supabase project.
+Verified: mocked token handling, demo-mode gating and profile mapping; hosted database migrations and transactional RLS checks; production API rejection of missing/invalid sessions. **Not verified end to end:** real student mailbox sign-in followed by matching real profiles. Policy fixtures and fictional Gemini tests do not establish that flow.
 
 ## E. Mobile testing
 
@@ -68,7 +74,7 @@ Open `/matches` in browser devtools at 375, 390, 768 and 1440 px. Filters are co
 
 ## F. Known limitations
 
-- Real authenticated matching needs Person 2's `profiles` table and onboarding; untested live.
+- The profile table, RLS and onboarding exist; real student sign-in and real-profile matching remain unverified end to end.
 - `/discover` still shows the static demo to signed-out visitors until Person 1 chooses to swap it.
 - Rate limit and cache are per serverless instance (in memory).
 - Scores are estimates, not predictions; the UI shows a disclaimer.

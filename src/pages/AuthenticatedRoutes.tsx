@@ -1,9 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { getAuthClient } from '../lib/auth'
 import { parseProfilePhotoUrl, rowToProfile } from '../lib/profileMapper'
-import { createProfile } from '../lib/profilePersistence'
+import { getMyProfile, listProfiles, upsertMyProfile } from '../lib/profiles'
 import { StudentDeck } from '../components/discover/StudentDeck'
 import type { ProfileWrite } from '../types/database'
 import type {
@@ -96,7 +95,7 @@ export function Onboarding() {
     }
 
     try {
-      await createProfile(user.id, profile)
+      await upsertMyProfile(profile)
       await refresh()
     } catch {
       setError('Could not save your profile. Please check your entries and try again.')
@@ -157,6 +156,7 @@ export function StudentDiscover() {
   const [result, setResult] = useState<{
     userId: string | undefined
     attempt: number
+    profile?: RoommateProfile | null
     profiles?: RoommateProfile[]
     error?: string
   } | null>(null)
@@ -164,15 +164,12 @@ export function StudentDiscover() {
   useEffect(() => {
     let active = true
     void (async () => {
-      const client = await getAuthClient()
-      const { data, error: queryError } = await client.from('profiles').select(
-        'id,university_id,display_name,bio,photo_url,budget_min,budget_max,distance_from_campus_miles,move_in_date,roommates_wanted,housing_status,verified_university_email,monthly_rent,room_type,cleanliness,sleep_schedule,noise_tolerance,study_environment,guest_frequency,pet_preference,smoking,interests,dealbreakers,major,academic_year,is_active',
-      ).limit(500)
-      if (queryError) throw queryError
+      const [ownRow, candidates] = await Promise.all([getMyProfile(), listProfiles()])
       if (active) setResult({
         userId,
         attempt,
-        profiles: (data ?? []).filter((row) => row.is_active).map(rowToProfile).filter((row): row is RoommateProfile => row !== null),
+        profile: ownRow?.is_active ? rowToProfile({ ...ownRow }) : null,
+        profiles: candidates.map((row) => rowToProfile({ ...row })).filter((row): row is RoommateProfile => row !== null),
       })
     })().catch(() => {
       if (active) setResult({ userId, attempt, error: 'Could not load student profiles. Please retry.' })
@@ -186,7 +183,7 @@ export function StudentDiscover() {
   if (currentResult?.error) return <main className="shell route-notice"><p role="alert">{currentResult.error}</p><button onClick={() => setAttempt((n) => n + 1)}>Retry</button></main>
   const profiles = currentResult?.profiles
   if (!profiles) return <main className="shell route-notice" role="status">Loading student profiles…</main>
-  const current = profiles.find((profile) => profile.id === user?.id)
+  const current = currentResult.profile
   if (!current || !session) return <main className="shell route-notice"><h1>Complete your profile</h1><p>An active profile with a move-in date is needed for discovery.</p><Link to="/account">Account</Link></main>
   return <StudentDeck key={current.id} currentUser={current} profiles={profiles} accessToken={session.access_token} />
 }

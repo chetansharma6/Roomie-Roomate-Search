@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom';
 import type { SwipeDecision } from '../../hooks/useSwipeGesture';
 import { filterCandidates } from '../../lib/filters';
 import { describeFallback, findMatches, MatchClientError } from '../../lib/matchClient';
-import { sendRoommateInterest } from '../../lib/profilePersistence';
+import { DataAccessError } from '../../lib/dataAccess';
+import { sendRoommateRequest } from '../../lib/roommateRequests';
 import type { MatchResponse, ProfileFilters, RoommateProfile } from '../../types/profile';
 import { FilterPanel } from './FilterPanel';
 import { MatchingLoadingState } from './MatchingLoadingState';
@@ -71,10 +72,12 @@ export function StudentDeck({ currentUser, profiles, accessToken }: {
       interestInFlight.current = true;
       setSending(true);
       try {
-        await sendRoommateInterest(currentUser.id, profile.id);
-      } catch {
-        setInterestError('Could not send your interest. Please try again.');
-        return;
+        await sendRoommateRequest(profile.id);
+      } catch (error) {
+        if (!(error instanceof DataAccessError && error.code === 'duplicate')) {
+          setInterestError('Could not send your interest. Please try again.');
+          return;
+        }
       } finally {
         interestInFlight.current = false;
         setSending(false);
