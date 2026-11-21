@@ -116,6 +116,30 @@ Optional columns that are null or hold an unrecognised value are treated as "not
 
 Current evidence: automated adapter tests, temporary local PostgreSQL checks, hosted transactional policy checks and signed-out HTTP checks pass. The migrations and signup hook are applied. Real mailbox sign-in, real student profile creation, and a real `/api/match` response remain unverified. `supabase/tests/roomie_rls.sql` is a repeatable hosted policy smoke test that rolls back synthetic fixtures; run with `npx supabase db query --remote --file supabase/tests/roomie_rls.sql --yes`.
 
+## Real Supabase profiles + Gemini (integration summary)
+
+Verified against `main` after Person 2's PR #19. No new application code was required; the integration already existed, so this branch only adds `tests/realProfilesIntegration.test.ts` and this section.
+
+**Loading real profiles**
+- Browser: `StudentDiscover` (`src/pages/AuthenticatedRoutes.tsx`) calls `getMyProfile()` and `listProfiles()` from `src/lib/profiles.ts`. Both use the signed-in session's client, so RLS decides what is visible. `listProfiles()` takes no arguments, requires a session (`unauthenticated` error otherwise), returns up to 500 active profiles excluding the caller, and selects an explicit column allowlist (`PROFILE_COLUMNS`, no email/phone).
+- Rows are converted with `rowToProfile` (`src/lib/profileMapper.ts`). Rows missing a required field (e.g. a draft with no `move_in_date`) are dropped; missing optional fields stay `undefined` and are never invented. An own profile that is inactive or incomplete shows the "Complete your profile" onboarding message.
+
+**Reaching Gemini**
+1. "Find My AI Matches" / ranking calls `findMatches` (`src/lib/matchClient.ts`) with `Authorization: Bearer <session.access_token>` and only `{ filters }` in the body.
+2. `POST /api/match` verifies the token with Supabase Auth, takes the user id from the token, and re-loads the requester and same-university candidates itself (`api/_lib/supabase.ts`, user JWT, RLS). Client-sent ids or universities are ignored. The client's own list is used only for local filtering/fallback and display.
+3. Deterministic filters run first; then up to 10 candidates go to Gemini with lifestyle fields only (no email, name, budget, distance, or dates). Any Gemini failure falls back to baseline scoring.
+
+**Schema compatibility** (checked field by field): `id`, `university_id`, `budget_min/max`, `distance_from_campus_miles`, `move_in_date`, `roommates_wanted`, `housing_status` (`have_room`/`need_room` normalised to `has_room`/`needs_room`), lifestyle enums and `verified_university_email` all match. No conflicts found. Note `move_in_date` is nullable in the database but required for discovery.
+
+**Environment variables**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (browser and server), `GEMINI_API_KEY` (server only), optional `GEMINI_MODEL`, `ROOMIE_DEMO_MODE=false`. No service-role key is used anywhere.
+
+**Testing with real students**: follow "Real Supabase acceptance test (pending)" above with two confirmed university accounts that each have a complete active profile.
+
+**Remaining limitations**
+- Not verified against a live Supabase project or real student accounts; automated tests use mocked Supabase REST.
+- The `StudentDiscover` React component has no automated test (no jsdom/testing-library in the repo); its behaviour is covered by the underlying data-access, mapper and `/api/match` tests. Desktop/mobile layout was not visually checked.
+- `listProfiles()` caps at 500 rows without pagination; the browser and server each fetch profiles (two reads per match).
+
 ## Person 1 — using the discovery UI
 
 ```tsx
@@ -187,7 +211,7 @@ The prompt-injection profile (`ADVERSARIAL_TEST_PROFILES`) is not in `DEMO_PROFI
 
 ### Remaining requirements for real Supabase integration (Person 2)
 - A `profiles` table with the columns in `rowToProfile` (required: id, university_id, display_name, budget_min/max, distance_from_campus_miles, move_in_date, roommates_wanted, housing_status). Rows missing one are skipped silently.
-- `SUPABASE_SECRET_KEY` set on the server only; RLS should not expose other students' rows directly to the browser (matching reads them with the secret key and returns only public card fields).
+- No secret key is needed: matching reads profiles with the caller's JWT, so RLS applies, and returns only public card fields.
 - Mapper accepts `need_room/have_room` and `needs_room/has_room`; confirm which one the real table uses.
 - Not yet exercised against a live Supabase project; only mocked REST is tested.
 
