@@ -1,0 +1,4 @@
+project_id = "xcelqqmncgeveawkumje"
+
+[functions.roommate-insights]
+verify_jwt = true

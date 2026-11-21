@@ -4,7 +4,7 @@
  *   2. npm run smoke:gemini
  * Never prints the key. Automated tests do not call this.
  */
-import { analyzeWithGemini, DEFAULT_GEMINI_MODEL } from '../api/_lib/gemini.js';
+import { analyzeWithGemini, DEFAULT_GEMINI_MODEL, MAX_CANDIDATES_PER_REQUEST } from '../api/_lib/gemini.js';
 import { DEMO_PROFILES, DEMO_STUDENT } from '../src/data/demoProfiles.js';
 import { filterCandidates } from '../src/lib/filters.js';
 import { rankBaseline } from '../src/lib/scoring.js';
@@ -18,7 +18,7 @@ const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
 const eligible = filterCandidates(DEMO_PROFILES, {}, DEMO_STUDENT);
 const baseline = new Map(rankBaseline(DEMO_STUDENT, eligible).map((m) => [m.profileId, m.compatibilityScore]));
 
-console.log(`Calling ${model} with ${Math.min(eligible.length, 10)} fictional candidates…`);
+console.log(`Calling ${model} with ${Math.min(eligible.length, MAX_CANDIDATES_PER_REQUEST)} fictional candidates…`);
 try {
   const matches = await analyzeWithGemini(DEMO_STUDENT, eligible, { apiKey, model });
   for (const m of matches) {

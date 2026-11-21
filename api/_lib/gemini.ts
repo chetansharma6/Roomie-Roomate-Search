@@ -3,7 +3,7 @@ import { geminiJsonSchema, validateGeminiMatches } from '../../src/lib/matchSche
 import type { MatchResult, RoommateProfile } from '../../src/types/profile.js';
 import { ROOMIE_SYSTEM_INSTRUCTION, buildUserPrompt } from './prompt.js';
 
-export const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
+export const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
 export const MAX_CANDIDATES_PER_REQUEST = 10;
 export const GEMINI_TIMEOUT_MS = 20_000;
 
