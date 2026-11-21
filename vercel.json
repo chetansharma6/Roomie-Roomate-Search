@@ -1,0 +1,3 @@
+{
+  "functions": { "api/match.ts": { "maxDuration": 30 } }
+}
