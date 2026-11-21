@@ -2,7 +2,8 @@ Roomie database setup — applied to hosted Supabase on 2026-11-21
 
 CONFIRMED HOSTED STATE
 
-Both migrations below were applied successfully to project xcelqqmncgeveawkumje.
+All three migrations below were applied successfully to project xcelqqmncgeveawkumje,
+including the additive matching-preferences migration.
 Migration history matches local files. RLS is enabled on all four application
 tables, including the legacy domain table. The hosted transactional policy
 test in supabase/tests/roomie_rls.sql passed and rolled back all fixtures.

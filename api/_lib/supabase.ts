@@ -45,7 +45,7 @@ export function createSupabaseRepository(env: SupabaseEnv, accessToken: string, 
     Authorization: `Bearer ${accessToken}`,
   };
   // Explicit projection prevents future private columns from reaching matching.
-  const columns = 'id,university_id,display_name,bio,budget_min,budget_max,distance_from_campus_miles,move_in_date,roommates_wanted,housing_status,verified_university_email,cleanliness,sleep_schedule,noise_tolerance,pet_preference,interests,major,academic_year';
+  const columns = 'id,university_id,display_name,bio,budget_min,budget_max,distance_from_campus_miles,move_in_date,roommates_wanted,housing_status,verified_university_email,monthly_rent,room_type,cleanliness,sleep_schedule,noise_tolerance,study_environment,guest_frequency,pet_preference,smoking,interests,dealbreakers,major,academic_year';
   async function query(qs: string): Promise<Record<string, unknown>[]> {
     const res = await fetchImpl(`${env.VITE_SUPABASE_URL}/rest/v1/profiles?${qs}`, { headers });
     if (!res.ok) throw new Error(`profiles query failed (${res.status})`);

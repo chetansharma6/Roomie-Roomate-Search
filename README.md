@@ -175,6 +175,16 @@ npm run supabase:deploy
 
 For local Edge Function development, copy `supabase/functions/.env.example` to the ignored `supabase/functions/.env`. The existing `/api/match` Vercel Function reads the same two Gemini variables from the ignored root `.env.local`; configure them in Vercel project settings if that function is deployed. Never prefix the Gemini key with `VITE_`, return it in an HTTP response, or write it to logs.
 
+## Hosting
+
+Use one Vercel project for the Vite frontend and the Node.js `/api/match` function. Supabase continues to provide PostgreSQL, Auth, and the `roommate-insights` Edge Function. A separate Render server is unnecessary for this architecture.
+
+The checked-in `vercel.json` builds with `npm run build`, serves `dist`, and rewrites the application routes to the SPA without rewriting `/api/match`. `.vercelignore` excludes local environment files from uploaded source.
+
+Configure these Vercel environment variables for Production (and Preview if needed): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_ALLOWED_EMAIL_DOMAINS=usf.edu`, server-only `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3.5-flash-lite`, and `ROOMIE_DEMO_MODE=false`. Matching uses the student's JWT and does not require the Supabase secret key. Redeploy after changing browser variables because Vite embeds them at build time.
+
+Once a production URL is assigned, set Supabase's Site URL to that HTTPS origin and allow its exact `/signup` URL alongside the localhost callback. Keep email confirmation and the domain hook enabled. Real student sign-in still requires working SMTP and mailbox confirmation; deployment alone does not validate that flow.
+
 ## AI Roommate Insights
 
 Signed-in users can submit a short description of their housing and everyday living preferences. The browser sends it to the authenticated `roommate-insights` Edge Function, which validates the user and input before contacting Gemini. The function returns conversation prompts and practical considerations; it does not make housing eligibility, trust, safety, or guaranteed-compatibility decisions.
