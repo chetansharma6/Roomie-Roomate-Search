@@ -11,6 +11,7 @@ vi.mock('../src/lib/supabase', () => ({ supabase: {
   auth: mocks,
   from: mocks.from,
 } }))
+import { captureOtpResponse, fetchWithOtpRetry } from '../src/lib/otpRetry'
 import { authErrorMessage, consumeAuthCallbackError, getAuthDestination, getCurrentUser, getSession, isSupportedUniversityEmail, sendMagicLink, signOut } from '../src/lib/auth'
 
 beforeEach(() => {
@@ -42,8 +43,38 @@ describe('Roomie auth service', () => {
   })
   it('returns a safe rate-limit message without provider details', async () => {
     mocks.signInWithOtp.mockResolvedValue({ error: { status: 429, message: 'secret provider detail' } })
-    await expect(sendMagicLink('student@usf.edu')).rejects.toThrow('Too many sign-in requests')
+    await expect(sendMagicLink('student@usf.edu')).rejects.toMatchObject({
+      code: 'rate_limited', message: 'Try again shortly', retryAt: undefined,
+    })
     expect(authErrorMessage({ message: 'secret provider detail' })).not.toContain('secret')
+  })
+  it('uses the remaining delay in Supabase’s email cooldown response', async () => {
+    const now = Date.now()
+    mocks.signInWithOtp.mockResolvedValue({
+      error: { code: 'over_email_send_rate_limit', message: 'For security purposes, you can only request this after 30 seconds.' },
+    })
+    const result = await sendMagicLink('student@usf.edu').catch((error) => error)
+    expect(result.code).toBe('rate_limited')
+    expect(result.retryAt).toBeGreaterThanOrEqual(now + 30_000)
+    expect(result.retryAt).toBeLessThanOrEqual(Date.now() + 30_000)
+  })
+  it.each(['30', 'Wed, 21 Oct 2030 07:28:00 GMT'])('captures the Retry-After header (%s) before SDK parsing', async (header) => {
+    const now = new Date('2030-10-21T07:27:30Z')
+    vi.spyOn(Date, 'now').mockReturnValue(now.getTime())
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, {
+      status: 429, headers: { 'Retry-After': header },
+    }))
+    try {
+      const email = 'student@usf.edu'
+      const result = await captureOtpResponse(email, () => fetchWithOtpRetry('https://auth.example/auth/v1/otp', {
+        method: 'POST', body: JSON.stringify({ email }),
+      }))
+      expect(result.status).toBe(429)
+      expect(result.retryAt).toBe(now.getTime() + 30_000)
+    } finally {
+      vi.mocked(Date.now).mockRestore()
+      fetchMock.mockRestore()
+    }
   })
   it('handles missing sessions without calling getUser', async () => {
     expect(await getSession()).toBeNull()

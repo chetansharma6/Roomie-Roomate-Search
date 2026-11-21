@@ -1,6 +1,7 @@
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { z } from 'zod'
 import { isAllowedEmailDomain, parseAllowedEmailDomains } from './emailDomains'
+import { captureOtpResponse } from './otpRetry'
 import type { AuthDestination } from '../types/auth'
 
 // Loading the client on demand lets the landing/demo pages work without config.
@@ -23,6 +24,17 @@ export class RoomieAuthError extends Error {
   }
 }
 
+export class MagicLinkRateLimitError extends RoomieAuthError {
+  constructor(public readonly retryAt?: number) {
+    super('rate_limited', 'Try again shortly')
+    this.name = 'MagicLinkRateLimitError'
+  }
+}
+
+function isRateLimited(status?: number, code?: string) {
+  return status === 429 || code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit'
+}
+
 export function isSupportedUniversityEmail(email: string): boolean {
   const normalized = email.trim().toLowerCase()
   return z.email().safeParse(normalized).success && isAllowedEmailDomain(normalized, supportedUniversityDomains)
@@ -31,9 +43,7 @@ export function isSupportedUniversityEmail(email: string): boolean {
 export function authErrorMessage(error: unknown): string {
   if (error instanceof RoomieAuthError) return error.message
   const { code, status } = (error ?? {}) as { code?: string; status?: number }
-  if (status === 429 || code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit') {
-    return 'Too many sign-in requests. Please wait before requesting another link.'
-  }
+  if (isRateLimited(status, code)) return 'Try again shortly'
   if (code === 'otp_expired' || code === 'flow_state_expired') return 'This sign-in link has expired or was already used. Request a new link.'
   if (code === 'email_address_not_authorized') return 'Email delivery is restricted. Ask the Roomie team to configure custom SMTP.'
   if (code === 'email_not_confirmed') return 'Confirm your email using the sign-in link before continuing.'
@@ -46,10 +56,16 @@ export async function sendMagicLink(email: string): Promise<void> {
   if (!supportedUniversityDomains.length) throw new RoomieAuthError('not_configured', 'University sign-in is not configured. Contact the Roomie team.')
   if (!isSupportedUniversityEmail(normalized)) throw new RoomieAuthError('unsupported_domain', 'Use an email address from a supported university.')
   const client = await getAuthClient()
-  const { error } = await client.auth.signInWithOtp({
+  const { result: { error }, status, retryAt } = await captureOtpResponse(normalized, () => client.auth.signInWithOtp({
     email: normalized,
     options: { emailRedirectTo: new URL('/signup', window.location.origin).href },
-  })
+  }))
+  if (isRateLimited(status ?? error?.status, error?.code)) {
+    // Supabase also includes a remaining delay in its email cooldown error.
+    const seconds = error?.message.match(/^For security purposes, you can only request this after (\d+) seconds?\.$/)?.[1]
+    const messageDeadline = seconds === undefined ? undefined : Date.now() + Number(seconds) * 1000
+    throw new MagicLinkRateLimitError(retryAt ?? (Number.isFinite(messageDeadline) ? messageDeadline : undefined))
+  }
   if (error) throw new RoomieAuthError(error.code ?? 'send_failed', authErrorMessage(error))
 }
 
