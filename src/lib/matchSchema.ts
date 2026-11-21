@@ -121,7 +121,7 @@ export const candidateProfileSchema = z.object({
 export const matchResponseSchema = z.object({
   source: z.enum(['gemini', 'fallback']),
   fallbackReason: z
-    .enum(['no_api_key', 'rate_limited', 'timeout', 'invalid_ai_response', 'ai_error', 'network_error', 'server_error'])
+    .enum(['no_api_key', 'rate_limited', 'unavailable', 'timeout', 'invalid_ai_response', 'ai_error', 'network_error', 'server_error'])
     .optional(),
   model: z.string().optional(),
   matches: z.array(matchResultSchema),

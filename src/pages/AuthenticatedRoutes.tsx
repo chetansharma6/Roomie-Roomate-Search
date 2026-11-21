@@ -188,7 +188,7 @@ export function StudentDiscover() {
   const current = currentResult.profile
   if (!current || !session) return <main className="shell route-notice"><h1>Complete your profile</h1><p>An active profile with a move-in date is needed for discovery.</p><Link to="/profile">Edit profile</Link></main>
   return <>
-    <div className="shell"><Link to="/profile">Edit profile</Link> · <Link to="/account">Account and sign out</Link></div>
+    <div className="shell student-desktop-chrome"><Link to="/profile">Edit profile</Link> · <Link to="/account">Account and sign out</Link></div>
     <RoommateRequestInbox profiles={profiles} />
     <StudentDeck key={current.id} currentUser={current} profiles={profiles} accessToken={session.access_token} />
   </>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRight, BadgeCheck, CalendarDays, MapPin, Users, Wallet } from 'lucide-react';
+import { ArrowRight, BadgeCheck, CalendarDays, ChevronUp, MapPin, Users, Wallet } from 'lucide-react';
 import type { RoommateProfile } from '../types/RoommateProfile';
 
 interface ProfileCardProps {
@@ -26,12 +26,7 @@ export const sleepLabels: Record<RoommateProfile['sleepSchedule'], string> = {
 export function ProfileCard({ profile, matchScore, showBio = true, onViewProfile }: ProfileCardProps) {
   const [failedPhoto, setFailedPhoto] = useState<string>();
   const initials = profile.name.trim().split(/\s+/).slice(0, 2).map((word) => word[0]).join('');
-  const moveIn = new Date(profile.moveInDate);
-  const moveInLabel = Number.isNaN(moveIn.getTime()) ? 'Flexible' : moveInFormatter.format(moveIn);
   const hasRoom = profile.housingStatus === 'have_room';
-  const monthlyRent = profile.budgetMin === profile.budgetMax
-    ? dollars.format(profile.budgetMax)
-    : `${dollars.format(profile.budgetMin)}–${dollars.format(profile.budgetMax)}`;
 
   return (
     <article className="profile-card">
@@ -59,18 +54,32 @@ export function ProfileCard({ profile, matchScore, showBio = true, onViewProfile
         )}
       </div>
       {showBio && <p className="profile-bio">{profile.bio}</p>}
-      <dl className="profile-facts">
-        <div><dt><Wallet aria-hidden="true" /> {hasRoom ? 'Monthly rent' : 'Monthly budget'}</dt><dd>{monthlyRent}</dd></div>
-        <div><dt><MapPin aria-hidden="true" /> Campus distance</dt><dd>{profile.distanceMiles} mi</dd></div>
-        <div><dt><CalendarDays aria-hidden="true" /> Move-in</dt><dd>{moveInLabel}</dd></div>
-        <div><dt><Users aria-hidden="true" /> Roommates wanted</dt><dd>{profile.roommatesWanted}</dd></div>
-      </dl>
+      <ProfileFacts profile={profile} />
       {onViewProfile && (
-        <button className="button button-outline profile-action" type="button" onClick={() => onViewProfile(profile)}>
-          View profile <ArrowRight size={16} aria-hidden="true" />
+        <button className="button button-outline profile-action discover-more" type="button" aria-haspopup="dialog" onClick={() => onViewProfile(profile)}>
+          <span className="profile-action-desktop">View profile <ArrowRight size={16} aria-hidden="true" /></span>
+          <span className="profile-action-mobile">More info <ChevronUp size={17} aria-hidden="true" /></span>
           <span className="sr-only"> for {profile.name}</span>
         </button>
       )}
     </article>
+  );
+}
+
+export function ProfileFacts({ profile }: { profile: RoommateProfile }) {
+  const moveIn = new Date(profile.moveInDate);
+  const moveInLabel = Number.isNaN(moveIn.getTime()) ? 'Flexible' : moveInFormatter.format(moveIn);
+  const hasRoom = profile.housingStatus === 'have_room';
+  const monthlyRent = profile.budgetMin === profile.budgetMax
+    ? dollars.format(profile.budgetMax)
+    : `${dollars.format(profile.budgetMin)}–${dollars.format(profile.budgetMax)}`;
+
+  return (
+    <dl className="profile-facts">
+      <div><dt><Wallet aria-hidden="true" /> {hasRoom ? 'Monthly rent' : 'Monthly budget'}</dt><dd>{monthlyRent}</dd></div>
+      <div><dt><MapPin aria-hidden="true" /> Campus distance</dt><dd>{profile.distanceMiles} mi</dd></div>
+      <div><dt><CalendarDays aria-hidden="true" /> Move-in</dt><dd>{moveInLabel}</dd></div>
+      <div><dt><Users aria-hidden="true" /> Roommates wanted</dt><dd>{profile.roommatesWanted}</dd></div>
+    </dl>
   );
 }

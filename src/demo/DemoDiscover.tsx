@@ -1,7 +1,8 @@
 import { ArrowLeft, Check, Heart, RotateCcw, X } from 'lucide-react';
+import { closeDiscoverDetails } from '../components/discover/closeDiscoverDetails';
 import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import { cleanlinessLabels, ProfileCard, sleepLabels } from '../components/ProfileCard';
+import { cleanlinessLabels, ProfileCard, ProfileFacts, sleepLabels } from '../components/ProfileCard';
 import type { RoommateProfile } from '../types/RoommateProfile';
 import { SwipeTutorial, hasDismissedTutorial } from './SwipeTutorial';
 import { useSwipeGesture, type SwipeDecision } from '../hooks/useSwipeGesture';
@@ -23,7 +24,7 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
   const restoreFocus = useRef(false);
   const restoreTutorialFocus = useRef(false);
 
-  const { dragging, offset, resetDrag, handlers } = useSwipeGesture(decide, tutorialOpen || Boolean(exit));
+  const { dragging, offset, resetDrag, handlers } = useSwipeGesture(decide, tutorialOpen || Boolean(exit) || Boolean(selected));
   const profile = demoProfiles.find(({ id }) => !decisions[id]);
 
   useEffect(() => () => {
@@ -44,12 +45,13 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
 
   function showProfile(person: RoommateProfile) {
     if (exitTimer.current !== null) return;
+    resetDrag();
     setSelected(person);
     dialog.current?.showModal();
   }
 
   function decide(decision: SwipeDecision, keepFocus = false) {
-    if (!profile || tutorialOpen || exitTimer.current !== null) return;
+    if (!profile || tutorialOpen || selected || exitTimer.current !== null) return;
     const id = profile.id;
     resetDrag();
 
@@ -70,9 +72,9 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
   }
 
   return (
-    <main className="discovery" id="main-content">
+    <main className="discovery demo-discovery" id="main-content">
       <nav className="discovery-nav" aria-label="Discover navigation">
-        {!embedded && <Link className="discovery-back" to="/"><ArrowLeft size={17} aria-hidden="true" /> Back to home</Link>}
+        {!embedded && <Link className="discovery-back" to="/"><ArrowLeft size={17} aria-hidden="true" /> <span>Back to home</span></Link>}
         {profile && (
           <button ref={tutorialButton} className="swipe-help" type="button" aria-haspopup="dialog"
             hidden={tutorialOpen} aria-disabled={Boolean(exit)} onClick={() => {
@@ -138,15 +140,17 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
         }} />
       )}
 
-      <dialog className="profile-dialog" ref={dialog} aria-labelledby="profile-dialog-title" onClose={() => setSelected(null)}>
+      <dialog className="profile-dialog discover-details" ref={dialog} aria-labelledby="profile-dialog-title" onSubmit={closeDiscoverDetails} onCancel={closeDiscoverDetails}
+        onClose={() => setSelected(null)}>
         <div className="dialog-top">
           <h2 id="profile-dialog-title">About {selected?.name}</h2>
           <form method="dialog">
-            <button className="icon-button" type="submit" aria-label="Close profile"><X aria-hidden="true" size={20} /></button>
+            <button className="icon-button" type="submit" aria-label="Close profile"><X aria-hidden="true" size={20} /><span className="discover-close-label">Close</span></button>
           </form>
         </div>
         {selected && (
           <>
+            <div className="demo-sheet-facts"><ProfileFacts profile={selected} /></div>
             <p>{selected.bio}</p>
             <dl className="lifestyle-list">
               <div><dt>Cleanliness</dt><dd>{cleanlinessLabels[selected.cleanliness]}</dd></div>

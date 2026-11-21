@@ -35,7 +35,10 @@ export function SwipeTutorial({ stage, persist, onDismiss }: {
         height: `${height}px`,
       });
       const edge = card.firstElementChild?.getBoundingClientRect();
-      if (edge) highlight.style.setProperty('--swipe-hand-edge', `${edge.left - x + edge.width / 2}px`);
+      if (edge) {
+        highlight.style.setProperty('--swipe-hand-edge', `${edge.left - x + edge.width / 2}px`);
+        highlight.style.setProperty('--swipe-hand-y', `${edge.top - y + edge.height / 2}px`);
+      }
     }
 
     positionHighlight();
