@@ -21,22 +21,21 @@ export function Navbar({ embedded = false }: NavbarProps) {
             <span className="brand-icon"><House aria-hidden="true" size={21} strokeWidth={2.5} /></span>
             Roomie<span className="brand-dot">.</span>
           </Link>
-          <div className="nav-links">
-            <a className="nav-how" href="/#how-it-works" target={target}>How it works</a>
-            <Link to="/discover" target={target}>Discover</Link>
+          <a className="nav-how" href="/#how-it-works" target={target}>How it works</a>
+          <div className="nav-end">
             {user && (
-              <Link className="inline-flex items-center gap-1.5" to="/inbox" target={target}>
+              <Link className="nav-inbox" to="/inbox" target={target}>
                 Inbox
                 {unread > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-roomie-teal px-1.5 text-xs font-bold text-white"
                   aria-label={`${unread} unread messages`}>{unread > 99 ? '99+' : unread}</span>}
               </Link>
             )}
+            <Link className={`button button-outline nav-action${user ? ' nav-action-signed-in' : ''}`} to="/signup" target={target}>
+              <span className="nav-action-long">Create a profile</span>
+              <span className="nav-action-short">Join</span>
+              <ArrowUpRight aria-hidden="true" size={16} />
+            </Link>
           </div>
-          <Link className={`button button-outline nav-action${user ? ' nav-action-signed-in' : ''}`} to="/signup" target={target}>
-            <span className="nav-action-long">Create a profile</span>
-            <span className="nav-action-short">Join</span>
-            <ArrowUpRight aria-hidden="true" size={16} />
-          </Link>
         </nav>
       </header>
     </>

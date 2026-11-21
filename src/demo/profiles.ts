@@ -1,3 +1,5 @@
+import type { DemoLifestyleAnswers } from '../components/onboarding/lifestyleQuestions';
+import type { LifestylePriority } from '../lib/lifestyleDetails';
 import type { RoommateProfile } from '../types/RoommateProfile';
 
 const people = [
@@ -52,6 +54,15 @@ const guests = ['never', 'rarely', 'sometimes', 'often'] as const;
 const pets = ['no_pets', 'pets_ok', 'has_pets'] as const;
 const smoking = ['smoke_free', 'outside_only', 'smoker'] as const;
 
+const quizCleanliness = { relaxed: 'moderate', moderate: 'moderate', tidy: 'tidy' } as const;
+const quizBedtime = { early: 'before_10', night: 'after_midnight', flexible: 'varies' } as const;
+const quizGuests = { never: 'rarely', rarely: 'rarely', sometimes: 'monthly', often: 'several_weekly' } as const;
+const temperatures = ['moderate', 'cool', 'warm', 'flexible'] as const;
+const chores = ['rotate', 'divide', 'as_needed'] as const;
+const priorityOptions: readonly LifestylePriority[] = ['quiet', 'cleanliness', 'pets', 'chores', 'temperature', 'guests', 'bedtime'];
+
+export type DemoProfile = RoommateProfile & { lifestyleAnswers: DemoLifestyleAnswers };
+
 function item<T>(values: readonly T[], index: number): T {
   return values[index % values.length]!;
 }
@@ -75,7 +86,7 @@ function avatarUrl(index: number): string {
  * verified status, and never write to Supabase. The demo scorer ignores age, likes,
  * dislikes, photos, and academic major.
  */
-export const demoProfiles: RoommateProfile[] = people.map(([name, major], index) => {
+export const demoProfiles: DemoProfile[] = people.map(([name, major], index) => {
   const id = `demo-student-${String(index + 1).padStart(2, '0')}`;
   const age = 20 + ((index * 7) % 10);
   const academicYear = item(academicYears, index * 3);
@@ -84,6 +95,7 @@ export const demoProfiles: RoommateProfile[] = people.map(([name, major], index)
   const likes = Array.from({ length: 4 }, (_, offset) => item(interests, (index * 13) + offset * 11));
   const avoid = item(dislikes, index * 5);
   const housingStatus = index % 3 === 0 ? 'have_room' : 'need_room';
+  const cleanlinessPreference = item(cleanliness, index * 7);
   const sleepSchedule = item(sleep, index * 2);
   const noiseTolerance = item(noise, index * 5);
   const guestFrequency = item(guests, index * 7);
@@ -111,7 +123,17 @@ export const demoProfiles: RoommateProfile[] = people.map(([name, major], index)
     distanceMiles,
     moveInDate,
     roommatesWanted,
-    cleanliness: item(cleanliness, index * 7),
+    lifestyleAnswers: {
+      temperature: item(temperatures, index),
+      cleanliness: quizCleanliness[cleanlinessPreference],
+      bedtime: quizBedtime[sleepSchedule],
+      guests: quizGuests[guestFrequency],
+      quiet: noiseTolerance,
+      chores: item(chores, index + Math.floor(index / 4)),
+      pets: petPreference,
+      priorities: [item(priorityOptions, index), item(priorityOptions, index + 1 + index % 6)],
+    },
+    cleanliness: cleanlinessPreference,
     sleepSchedule,
     noiseTolerance,
     guestFrequency,

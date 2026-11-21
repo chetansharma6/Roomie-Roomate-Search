@@ -2,11 +2,11 @@ import { ArrowLeft, Check, Heart, RotateCcw, X } from 'lucide-react';
 import { closeDiscoverDetails } from '../components/discover/closeDiscoverDetails';
 import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import { cleanlinessLabels, ProfileCard, ProfileFacts, sleepLabels } from '../components/ProfileCard';
-import type { RoommateProfile } from '../types/RoommateProfile';
+import { ProfileCard, ProfileFacts } from '../components/ProfileCard';
+import { DemoHabits } from '../components/discover/DemoHabits';
 import { SwipeTutorial, hasDismissedTutorial } from './SwipeTutorial';
 import { useSwipeGesture, type SwipeDecision } from '../hooks/useSwipeGesture';
-import { demoProfiles } from './profiles';
+import { demoProfiles, type DemoProfile } from './profiles';
 import { demoMatchFor } from './demoScoring';
 import { CompatibilityBadge } from '../components/discover/CompatibilityBadge';
 import { compatibilityBadgeModel } from '../lib/compatibilityBadge';
@@ -16,7 +16,7 @@ const exitDuration = 180;
 const demoMatches = new Map(demoProfiles.map((card) => [card.id, demoMatchFor(card)]));
 
 export function DemoDiscover({ embedded }: { embedded: boolean }) {
-  const [selected, setSelected] = useState<RoommateProfile | null>(null);
+  const [selected, setSelected] = useState<DemoProfile | null>(null);
   const [decisions, setDecisions] = useState<Partial<Record<string, SwipeDecision>>>({});
   const [exit, setExit] = useState<SwipeDecision | null>(null);
   const [tutorialOpen, setTutorialOpen] = useState(() => !embedded && !hasDismissedTutorial());
@@ -48,10 +48,10 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
     restoreTutorialFocus.current = false;
   }, [tutorialOpen]);
 
-  function showProfile(person: RoommateProfile) {
-    if (exitTimer.current !== null) return;
+  function showProfile() {
+    if (!profile || exitTimer.current !== null) return;
     resetDrag();
-    setSelected(person);
+    setSelected(profile);
     dialog.current?.showModal();
   }
 
@@ -146,7 +146,7 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
         }} />
       )}
 
-      <dialog className="profile-dialog discover-details" ref={dialog} aria-labelledby="profile-dialog-title" onSubmit={closeDiscoverDetails} onCancel={closeDiscoverDetails}
+      <dialog className="profile-dialog discover-details demo-profile-dialog" ref={dialog} aria-labelledby="profile-dialog-title" onSubmit={closeDiscoverDetails} onCancel={closeDiscoverDetails}
         onClose={() => setSelected(null)}>
         <div className="dialog-top">
           <h2 id="profile-dialog-title">About {selected?.name}</h2>
@@ -158,6 +158,7 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
           <>
             <div className="demo-sheet-facts"><ProfileFacts profile={selected} /></div>
             <p>{selected.bio}</p>
+            <DemoHabits answers={selected.lifestyleAnswers} />
             <section aria-labelledby="demo-likes-title">
               <h3 id="demo-likes-title" className="font-semibold">Likes</h3>
               <ul className="student-tags">{selected.interests.map((interest) => <li key={interest}>{interest}</li>)}</ul>
@@ -167,11 +168,6 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
               <ul className="student-tags">{selected.dislikes.map((dislike) => <li key={dislike}>{dislike}</li>)}</ul>
             </section>
             <dl className="lifestyle-list">
-              <div><dt>Cleanliness</dt><dd>{cleanlinessLabels[selected.cleanliness]}</dd></div>
-              <div><dt>Sleep schedule</dt><dd>{sleepLabels[selected.sleepSchedule]}</dd></div>
-              <div><dt>Noise</dt><dd>{selected.noiseTolerance}</dd></div>
-              <div><dt>Guests</dt><dd>{selected.guestFrequency}</dd></div>
-              <div><dt>Pets</dt><dd>{selected.petPreference.replace('_', ' ')}</dd></div>
               <div><dt>Smoking</dt><dd>{selected.smoking.replace('_', ' ')}</dd></div>
             </dl>
           </>
