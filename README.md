@@ -4,7 +4,7 @@ Roomie is a student-focused room and roommate discovery project. It is designed 
 
 ## Project Status
 
-The repository contains a React, TypeScript, and Vite application with passwordless Supabase authentication, fictional demo discovery, deterministic compatibility scoring, Gemini-assisted matching through a Vercel Function, and an authenticated Supabase Edge Function for Gemini-powered roommate conversation insights. The hosted project has all four database migrations applied; live student onboarding and matching still require account-level verification.
+The repository contains a React, TypeScript, and Vite application with passwordless Supabase authentication, fictional demo discovery, deterministic compatibility scoring, Gemini-assisted matching through a Vercel Function, and an authenticated Supabase Edge Function for Gemini-powered roommate conversation insights. The hosted project has all five database migrations applied; live student onboarding and matching still require account-level verification.
 
 ## Problem
 
@@ -157,7 +157,7 @@ Signed-in students can open `/profile` to retrieve and edit their persisted matc
 
 Signed-in Discover uses the same university-scoped profile reads and `/api/match` scores. Saving a profile with a move-in date completes the quiz. The deck builds preference tags from the saved answers, and **Interested** creates a pending row in `roommate_requests`; recipients can accept or decline from Discover. `20261121220000_profile_photos.sql` adds optional `profiles.photo_url` storage and its authenticated grants; it is applied to the hosted project. Students without a usable image see initials.
 
-Apply `20261121230000_profile_lifestyle_details.sql` before deploying the lifestyle quiz. The optional `profiles.lifestyle_details` field stores temperature, chores, exact bedtime and guest answers, and up to two roommate priorities. Discover reads it to display tags and priorities. The quiz maps the supported habits onto the existing cleanliness, sleep schedule, guest frequency, noise tolerance, and pet preference fields. The new detail field stays out of the Gemini prompt and baseline scoring. A saved move-in date remains the onboarding completion marker.
+`20261121230000_profile_lifestyle_details.sql` is applied to the hosted project. The optional `profiles.lifestyle_details` field stores temperature, chores, exact bedtime and guest answers, and up to two roommate priorities. Discover reads it to display tags and priorities. The quiz maps the supported habits onto the existing cleanliness, sleep schedule, guest frequency, noise tolerance, and pet preference fields. The new detail field stays out of the Gemini prompt and baseline scoring. A saved move-in date remains the onboarding completion marker.
 
 Run `npm test -- tests/auth.test.ts` for the authentication service tests. One test normalizes `Student@USF.EDU`, confirms that `signInWithOtp` receives the `/signup` callback, and checks that invalid or unsupported emails never reach Supabase. The suite also checks expired sessions/links, rate limits, confirmation, profile routing, and sign-out. These are automated tests with mocked Supabase responses.
 
