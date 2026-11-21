@@ -75,3 +75,33 @@ export interface UniversityDomainRow {
   domain: string;
   is_active: boolean;
 }
+
+export interface MessageRow {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+  read_at: string | null;
+}
+
+/** Result of public.express_interest. matched_now is true only for the call that created the match. */
+export interface InterestResult {
+  status: RoommateRequestRow['status'];
+  request_id: string;
+  matched_now: boolean;
+  match_id: string | null;
+  conversation_id: string | null;
+}
+
+/** Row returned by public.get_inbox(). */
+export interface InboxRow {
+  conversation_id: string;
+  match_id: string;
+  other_user_id: string;
+  matched_at: string;
+  last_message_at: string;
+  last_message_body: string | null;
+  last_message_sender_id: string | null;
+  unread_count: number;
+}
