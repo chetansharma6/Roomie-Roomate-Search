@@ -56,6 +56,8 @@ export function describeFallback(reason?: FallbackReason): string {
       return 'Gemini is not configured on this server, so these are baseline matches.';
     case 'rate_limited':
       return 'Gemini is busy right now (rate limit), so these are baseline matches.';
+    case 'unavailable':
+      return 'Gemini is temporarily overloaded, so these are baseline matches. Try again in a moment.';
     case 'timeout':
       return 'Gemini took too long to respond, so these are baseline matches.';
     case 'invalid_ai_response':

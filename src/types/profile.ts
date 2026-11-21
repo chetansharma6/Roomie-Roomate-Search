@@ -96,6 +96,7 @@ export interface MatchResult {
 export type FallbackReason =
   | 'no_api_key'
   | 'rate_limited'
+  | 'unavailable'
   | 'timeout'
   | 'invalid_ai_response'
   | 'ai_error'

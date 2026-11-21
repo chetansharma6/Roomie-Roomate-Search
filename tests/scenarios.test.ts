@@ -84,7 +84,7 @@ describe('Gemini failure handling (mocked)', () => {
     ['the requester itself', async () => JSON.stringify({ matches: [ok(DEMO_STUDENT_ID)] }), 'invalid_ai_response'],
     ['a filtered-out profile (smoker)', async () => JSON.stringify({ matches: [ok('demo-cole')] }), 'invalid_ai_response'],
     ['HTTP 429', async () => { throw Object.assign(new Error('RESOURCE_EXHAUSTED'), { status: 429 }); }, 'rate_limited'],
-    ['HTTP 503 outage', async () => { throw Object.assign(new Error('The model is overloaded'), { status: 503 }); }, 'ai_error'],
+    ['HTTP 503 outage', async () => { throw Object.assign(new Error('The model is overloaded'), { status: 503 }); }, 'unavailable'],
     ['network failure', async () => { throw new TypeError('fetch failed'); }, 'ai_error'],
   ];
 
