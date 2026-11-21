@@ -7,8 +7,13 @@ import type { RoommateProfile } from '../types/RoommateProfile';
 import { SwipeTutorial, hasDismissedTutorial } from './SwipeTutorial';
 import { useSwipeGesture, type SwipeDecision } from '../hooks/useSwipeGesture';
 import { demoProfiles } from './profiles';
+import { demoMatchFor } from './demoScoring';
+import { CompatibilityBadge } from '../components/discover/CompatibilityBadge';
+import { compatibilityBadgeModel } from '../lib/compatibilityBadge';
 
 const exitDuration = 180;
+// Deterministic baseline vs. the fictional demo student; computed once, keyed by profile id.
+const demoMatches = new Map(demoProfiles.map((card) => [card.id, demoMatchFor(card)]));
 
 export function DemoDiscover({ embedded }: { embedded: boolean }) {
   const [selected, setSelected] = useState<RoommateProfile | null>(null);
@@ -110,7 +115,8 @@ export function DemoDiscover({ embedded }: { embedded: boolean }) {
               style={{ transform: exit ? undefined : `translateX(${offset}px) rotate(${Math.max(-12, Math.min(12, offset / 15))}deg)` }}
               {...handlers}
             >
-              <ProfileCard profile={profile} showBio={false} onViewProfile={showProfile} />
+              <ProfileCard profile={profile} showBio={false} onViewProfile={showProfile}
+                badge={<CompatibilityBadge model={compatibilityBadgeModel({ profileId: profile.id, match: demoMatches.get(profile.id), demo: true })} />} />
             </div>
             <button className="swipe-choice swipe-choice-interest" type="button" aria-disabled={Boolean(exit)}
               onClick={(event) => decide('interested', event.detail === 0)}>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ArrowRight, BadgeCheck, CalendarDays, ChevronUp, MapPin, Users, Wallet } from 'lucide-react';
 import type { RoommateProfile } from '../types/RoommateProfile';
 
@@ -6,6 +6,8 @@ interface ProfileCardProps {
   profile: RoommateProfile;
   matchScore?: number;
   showBio?: boolean;
+  /** Optional overlay badge (e.g. compatibility), anchored to the card's photo. */
+  badge?: ReactNode;
   onViewProfile?: (profile: RoommateProfile) => void;
 }
 
@@ -23,7 +25,7 @@ export const sleepLabels: Record<RoommateProfile['sleepSchedule'], string> = {
   early: 'Early riser', night: 'Night owl', flexible: 'Flexible schedule',
 };
 
-export function ProfileCard({ profile, matchScore, showBio = true, onViewProfile }: ProfileCardProps) {
+export function ProfileCard({ profile, matchScore, showBio = true, badge, onViewProfile }: ProfileCardProps) {
   const [failedPhoto, setFailedPhoto] = useState<string>();
   const initials = profile.name.trim().split(/\s+/).slice(0, 2).map((word) => word[0]).join('');
   const hasRoom = profile.housingStatus === 'have_room';
@@ -37,6 +39,7 @@ export function ProfileCard({ profile, matchScore, showBio = true, onViewProfile
         ) : <span>{initials}</span>}
       </div>
       <header className="profile-header">
+        {badge}
         <div>
           <h2 className="profile-name">{profile.name}</h2>
           <p className="profile-subtitle">{profile.major} · {profile.university}</p>

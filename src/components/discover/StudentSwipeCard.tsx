@@ -3,16 +3,19 @@ import { closeDiscoverDetails } from './closeDiscoverDetails';
 import { CalendarDays, ChevronUp, Heart, MapPin, Wallet, X } from 'lucide-react';
 import { useSwipeGesture, type SwipeDecision } from '../../hooks/useSwipeGesture';
 import { SCORE_DISCLAIMER, type MatchResponse, type MatchResult, type RoommateProfile } from '../../types/profile';
+import { compatibilityBadgeModel } from '../../lib/compatibilityBadge';
+import { CompatibilityBadge } from './CompatibilityBadge';
 import { priceLabel } from './labels';
 import { MatchInsights } from './MatchExplanation';
 import { ProfileTags } from './ProfileTags';
 
 const formatDate = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 
-export function StudentSwipeCard({ profile, match, ranking, sending, onDecision }: {
+export function StudentSwipeCard({ profile, match, ranking, loading, sending, onDecision }: {
   profile: RoommateProfile;
   match?: MatchResult;
   ranking?: MatchResponse;
+  loading?: boolean;
   sending: boolean;
   onDecision: (decision: SwipeDecision) => void;
 }) {
@@ -39,10 +42,10 @@ export function StudentSwipeCard({ profile, match, ranking, sending, onDecision 
                 : <span>{initials}</span>}
             </div>
             <div className="student-profile-copy">
+              <CompatibilityBadge model={compatibilityBadgeModel({ profileId: profile.id, match, source: ranking?.source, loading })} />
               <h2>{profile.displayName}</h2>
               <p className="student-mobile-university">{profile.universityId.toUpperCase()}</p>
               <p className="student-desktop-housing">{profile.housingStatus === 'has_room' ? 'Has a room' : 'Looking for a place'} · {profile.distanceFromCampusMiles} mi from campus</p>
-              {match && <p className="student-score">{match.compatibilityScore}% compatibility · {ranking?.source === 'gemini' ? 'AI estimate' : 'baseline estimate'}</p>}
               <ProfileTags profile={profile} limit={3} />
               <button className="button student-more discover-more" type="button" aria-haspopup="dialog"
                 onClick={() => {
